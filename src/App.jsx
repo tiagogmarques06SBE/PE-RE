@@ -8,8 +8,6 @@
 //     model. If numbers look wrong, tell Lovable which specific
 //     *visual* element is broken, not to "fix the formula."
 //
-// Setup (run once in Lovable terminal):
-//   npm install html2canvas jspdf
 // ============================================================
 
 import { useState, useMemo, useRef } from "react";
@@ -538,11 +536,9 @@ function WaterfallPage({ inp, M }) {
 
 /* ══════════════════════════════════════════════════════
    PAGE 3 — MEMO EXPORT
-   Requires: npm install html2canvas jspdf
 ══════════════════════════════════════════════════════ */
 function MemoExportPage({ inp, M }) {
-  const memoRef   = useRef(null);
-  const [loading, setLoading] = useState(false);
+  const memoRef = useRef(null);
 
   const SENS = useMemo(() => {
     const b = inp.exitCap;
@@ -555,31 +551,9 @@ function MemoExportPage({ inp, M }) {
     + `${F.pct(M.levIRR)} levered IRR at ${F.pct(M.capIn)} entry cap rate, `
     + `${inp.ltv}% LTV financing, and ${F.mul(M.mom)} equity multiple.`;
 
-  const downloadPDF = async () => {
-    if (!memoRef.current) return;
-    setLoading(true);
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF }   = await import("jspdf");
-      const canvas = await html2canvas(memoRef.current, {
-        scale:2, useCORS:true, backgroundColor:"#ffffff", logging:false,
-      });
-      const pdf  = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
-      const w    = 210;
-      const h    = canvas.height * w / canvas.width;
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, w, Math.min(h, 297));
-      pdf.save(`${inp.dealName.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_memo.pdf`);
-    } catch (err) {
-      alert(
-        "PDF failed — run this in Lovable terminal first:\n\n" +
-        "  npm install html2canvas jspdf\n\n" +
-        "Error: " + err.message
-      );
-    }
-    setLoading(false);
-  };
+  const handlePrint = () => window.print();
 
-  // ── Memo styles (inline so html2canvas captures them correctly) ──
+  // ── Memo styles ──
   const ms = {
     page:  { width:794, background:"#fff", fontFamily:"Georgia, serif" },
     hdr:   { background:"#0f172a", padding:"28px 36px", color:"#fff" },
@@ -598,21 +572,20 @@ function MemoExportPage({ inp, M }) {
                     alignItems:"center", gap:12, flexShrink:0 }}>
         <div>
           <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>Investment Memo</div>
-          <div style={{ color:"#64748b", fontSize:10 }}>Preview below · exports as A4 PDF</div>
+          <div style={{ color:"#64748b", fontSize:10 }}>Preview below · use Ctrl+P / ⌘+P to save as PDF</div>
         </div>
         <div style={{ flex:1 }} />
         <input
           value={inp.preparedBy}
-          onChange={() => {}} // editing handled via shared state in App
+          onChange={() => {}}
           placeholder="Prepared by (edit in top bar)"
           style={{ background:"#334155", color:"#94a3b8", border:"1px solid #475569",
                    borderRadius:6, padding:"5px 10px", fontSize:11, width:200, outline:"none" }}
         />
-        <button onClick={downloadPDF} disabled={loading}
+        <button onClick={handlePrint}
           style={{ background:"#1d4ed8", color:"#fff", border:"none", borderRadius:8,
-                   padding:"8px 20px", fontSize:12, fontWeight:600,
-                   cursor:loading?"not-allowed":"pointer", opacity:loading?0.7:1 }}>
-          {loading ? "⏳ Generating…" : "⬇ Download PDF"}
+                   padding:"8px 20px", fontSize:12, fontWeight:600, cursor:"pointer" }}>
+          🖨 Print / Save PDF
         </button>
       </div>
 
