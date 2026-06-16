@@ -146,7 +146,7 @@ function SourcesUsesCard({ inp, M }) {
 }
 
 /* ─── Value-creation waterfall (returns attribution) ──────── */
-function AttributionWaterfall({ items }) {
+function AttributionWaterfall({ items, dark }) {
   const COLORS = { pos: "#10b981", neg: "#ef4444", total: "#1d4ed8" };
   const data = useMemo(() => {
     let cum = 0;
@@ -167,13 +167,16 @@ function AttributionWaterfall({ items }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
+  const tk = dark ? "#9ca3af" : "#64748b";
+  const gk = dark ? "#1f2937" : "#f1f5f9";
+  const tt = dark ? { background: "#1f2937", border: "1px solid #374151", color: "#f9fafb", fontSize: 11 } : { fontSize: 11 };
   return (
     <ResponsiveContainer width="100%" height={Math.max(220, data.length * 38)}>
       <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, left: 10, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-        <XAxis type="number" tick={{ fontSize: 9 }} tickFormatter={(v) => F.eur(v)} />
-        <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10 }} />
-        <Tooltip formatter={(v, n, p) => [F.eur(p.payload.val), "Contribution"]} contentStyle={{ fontSize: 11 }} />
+        <CartesianGrid strokeDasharray="3 3" stroke={gk} horizontal={false} />
+        <XAxis type="number" tick={{ fontSize: 9, fill: tk }} tickFormatter={(v) => F.eur(v)} />
+        <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10, fill: tk }} />
+        <Tooltip formatter={(v, n, p) => [F.eur(p.payload.val), "Contribution"]} contentStyle={tt} />
         <Bar dataKey="base" stackId="w" fill="transparent" />
         <Bar dataKey="delta" stackId="w" radius={[0, 3, 3, 0]}>
           {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
@@ -234,10 +237,15 @@ function InvalidPanel({ message }) {
 }
 
 /* ─── Page 1 — Underwriter ────────────────────────────────── */
-function UnderwriterPage({ inp, setInp, M }) {
+function UnderwriterPage({ inp, setInp, M, dark }) {
   const cfg = AC[inp.assetClass] || AC.office;
   const HP_r = M.HP, IO_r = M.IO;
   const num = k => v => setInp(p => ({ ...p, [k]: v }));
+  const tk = dark ? "#9ca3af" : "#64748b";
+  const gk = dark ? "#1f2937" : "#f1f5f9";
+  const tt = dark ? { background: "#1f2937", border: "1px solid #374151", color: "#f9fafb", fontSize: 10 } : { fontSize: 10 };
+  const exitRowBg = dark ? "#0d1f3d" : "#eff6ff";
+  const totalRowBg = dark ? "#1e293b" : "#f8fafc";
 
   const SENS = useMemo(() => {
     const b = inp.exitCap;
@@ -377,7 +385,7 @@ function UnderwriterPage({ inp, setInp, M }) {
           <div className="table-scroll">
             <table className="data-table">
               <thead>
-                <tr style={{ background: "#f8fafc" }}>
+                <tr style={{ background: totalRowBg }}>
                   {["Year", "NOI", "Interest", "Principal", "Debt Service", "CFADS", "DSCR", "Loan Bal.", "Exit Equity"].map(h => (
                     <th key={h} style={{ textAlign: h === "Year" ? "left" : "right" }}>{h}</th>
                   ))}
@@ -395,7 +403,7 @@ function UnderwriterPage({ inp, setInp, M }) {
                 {M.rows.map(d => {
                   const isExit = d.yr === HP_r, isIO = d.yr <= IO_r;
                   return (
-                    <tr key={d.yr} style={{ borderTop: "1px solid #f8fafc", background: isExit ? "#eff6ff" : "" }}>
+                    <tr key={d.yr} style={{ borderTop: "1px solid #f8fafc", background: isExit ? exitRowBg : "" }}>
                       <td style={{ fontWeight: 500, color: "#475569" }}>
                         {d.yr}{isIO ? " (IO)" : ""}{isExit ? " · Exit" : ""}
                       </td>
@@ -432,11 +440,11 @@ function UnderwriterPage({ inp, setInp, M }) {
             <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 8 }} aria-hidden="true">IO = Interest Only period</div>
             <ResponsiveContainer width="100%" height={185}>
               <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 9 }} />
-                <YAxis tick={{ fontSize: 9 }} tickFormatter={v => `${(v / 1000).toFixed(0)}K`} />
-                <Tooltip formatter={v => F.eur(v)} contentStyle={{ fontSize: 10 }} />
-                <Legend wrapperStyle={{ fontSize: 9 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gk} />
+                <XAxis dataKey="name" tick={{ fontSize: 9, fill: tk }} />
+                <YAxis tick={{ fontSize: 9, fill: tk }} tickFormatter={v => `${(v / 1000).toFixed(0)}K`} />
+                <Tooltip formatter={v => F.eur(v)} contentStyle={tt} />
+                <Legend wrapperStyle={{ fontSize: 9, color: tk }} />
                 <Bar dataKey="NOI" fill="#3b82f6" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="Debt Service" fill="#fca5a5" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="CFADS" fill="#34d399" radius={[2, 2, 0, 0]} />
@@ -513,9 +521,15 @@ function UnderwriterPage({ inp, setInp, M }) {
 }
 
 /* ─── Page 2 — Waterfall ──────────────────────────────────── */
-function WaterfallPage({ inp, M, wf, setWf }) {
+function WaterfallPage({ inp, M, wf, setWf, dark }) {
   const W = useMemo(() => computeWaterfall(M, wf), [M, wf]);
   const nW = k => v => setWf(p => ({ ...p, [k]: v }));
+  const tk = dark ? "#9ca3af" : "#64748b";
+  const gk = dark ? "#1f2937" : "#f1f5f9";
+  const tt = dark ? { background: "#1f2937", border: "1px solid #374151", color: "#f9fafb", fontSize: 10 } : { fontSize: 10 };
+  const totalRowBg = dark ? "#1e293b" : "#f8fafc";
+  const tblHeadBg = dark ? "#1e293b" : "#f8fafc";
+  const infoBoxBg = dark ? "#1e293b" : "#f8fafc";
 
   const chartData = useMemo(() => [
     { name: "LP", roc: W.lpROC, pref: W.lpPref, catchup: 0, t1: W.lpT1, t2: W.lpT2 },
@@ -648,11 +662,11 @@ function WaterfallPage({ inp, M, wf, setWf }) {
             <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 10 }}>LP (left) vs GP (right) — stacked by tier</div>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={chartData} margin={{ top: 0, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 600 }} />
-                <YAxis tick={{ fontSize: 9 }} tickFormatter={v => `${(v / 1000).toFixed(0)}K`} />
-                <Tooltip formatter={(v, name) => [F.eur(v), name]} contentStyle={{ fontSize: 10 }} />
-                <Legend wrapperStyle={{ fontSize: 9 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gk} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 600, fill: tk }} />
+                <YAxis tick={{ fontSize: 9, fill: tk }} tickFormatter={v => `${(v / 1000).toFixed(0)}K`} />
+                <Tooltip formatter={(v, name) => [F.eur(v), name]} contentStyle={tt} />
+                <Legend wrapperStyle={{ fontSize: 9, color: tk }} />
                 {tiers.map((t, i) => (
                   <Bar key={t.key} dataKey={t.key} stackId="s" name={t.label}
                     fill={TIER_COLOURS[i]} radius={t.key === "t2" ? [3, 3, 0, 0] : [0, 0, 0, 0]} />
@@ -666,7 +680,7 @@ function WaterfallPage({ inp, M, wf, setWf }) {
             <div className="table-scroll">
               <table className="data-table" style={{ minWidth: 400 }}>
                 <thead>
-                  <tr style={{ background: "#f8fafc" }}>
+                  <tr style={{ background: tblHeadBg }}>
                     {["Tier", "LP", "GP", "LP %", "GP %"].map(h => (
                       <th key={h} style={{ textAlign: h === "Tier" ? "left" : "right" }}>{h}</th>
                     ))}
@@ -682,7 +696,7 @@ function WaterfallPage({ inp, M, wf, setWf }) {
                       <td style={{ textAlign: "right", color: "#64748b" }}>{r.gpPct}</td>
                     </tr>
                   ))}
-                  <tr style={{ borderTop: "2px solid #e2e8f0", background: "#f8fafc" }}>
+                  <tr style={{ borderTop: "2px solid #e2e8f0", background: totalRowBg }}>
                     <td style={{ fontWeight: 700 }}>Total</td>
                     <td style={{ textAlign: "right", fontWeight: 700, color: "#1d4ed8", fontSize: 12 }}>{F.eur(W.lpTotal)}</td>
                     <td style={{ textAlign: "right", fontWeight: 700, color: "#7c3aed", fontSize: 12 }}>{F.eur(W.gpTotal)}</td>
@@ -697,7 +711,7 @@ function WaterfallPage({ inp, M, wf, setWf }) {
               </table>
             </div>
 
-            <div style={{ marginTop: 14, background: "#f8fafc", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ marginTop: 14, background: infoBoxBg, borderRadius: 6, padding: "10px 12px" }}>
               <div className="sec-title">Sponsor economics</div>
               <div style={{ fontSize: 10, color: "#475569", lineHeight: 1.6 }}>
                 The GP invested <strong>{F.pct(wf.gpPct)}</strong> of equity but earns{" "}
@@ -720,7 +734,7 @@ function WaterfallPage({ inp, M, wf, setWf }) {
 }
 
 /* ─── Page 3 — Memo Export ────────────────────────────────── */
-function MemoExportPage({ inp, M }) {
+function MemoExportPage({ inp, M, dark }) {
   const SENS = useMemo(() => {
     const b = inp.exitCap;
     return buildSens(inp, M.noi, [b - 1, b - 0.5, b, b + 0.5, b + 1], [50, 55, 60, 65, 70]);
@@ -734,12 +748,16 @@ function MemoExportPage({ inp, M }) {
       + `${inp.ltv}% LTV financing, and ${F.mul(M.mom)} equity multiple.`
     : "Model inputs require adjustment before metrics can be generated.";
 
+  const docBg = dark ? "#111827" : "#fff";
+  const docBorder = dark ? "#1f2937" : "#e2e8f0";
+  const docText = dark ? "#d1d5db" : "#334155";
+  const docMuted = dark ? "#6b7280" : "#94a3b8";
   const ms = {
-    hdr: { background: "#0f172a", padding: "28px 36px", color: "#fff" },
-    sec: { padding: "18px 36px", borderBottom: "1px solid #e2e8f0" },
-    secH: { fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 10, fontFamily: "sans-serif" },
-    body: { fontSize: 11, color: "#334155", lineHeight: 1.6, fontFamily: "sans-serif" },
-    foot: { background: "#f8fafc", padding: "12px 36px", borderTop: "1px solid #e2e8f0" },
+    hdr: { background: "#0a0f1a", padding: "28px 36px", color: "#fff" },
+    sec: { padding: "18px 36px", borderBottom: `1px solid ${docBorder}` },
+    secH: { fontSize: 11, fontWeight: 700, color: dark ? "#9ca3af" : "#475569", marginBottom: 10, fontFamily: "sans-serif" },
+    body: { fontSize: 11, color: docText, lineHeight: 1.6, fontFamily: "sans-serif" },
+    foot: { background: dark ? "#0d1520" : "#f8fafc", padding: "12px 36px", borderTop: `1px solid ${docBorder}` },
   };
 
   return (
@@ -758,7 +776,7 @@ function MemoExportPage({ inp, M }) {
       </div>
 
       <div className="memo-preview-wrap">
-        <div className="memo-doc">
+        <div className="memo-doc" style={{ background: docBg, borderColor: docBorder }}>
           <div style={ms.hdr}>
             <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4, fontFamily: "sans-serif" }}>
               Investment Memorandum
@@ -774,7 +792,7 @@ function MemoExportPage({ inp, M }) {
 
           <div style={ms.sec}>
             <div style={ms.secH}>Executive Summary</div>
-            <div style={{ ...ms.body, fontStyle: "italic", color: "#1e293b", fontSize: 12, borderLeft: "3px solid #1d4ed8", paddingLeft: 14 }}>
+            <div style={{ ...ms.body, fontStyle: "italic", fontSize: 12.5, lineHeight: 1.75, color: dark ? "#d1d5db" : "#1e293b" }}>
               {execLine}
             </div>
           </div>
@@ -783,7 +801,7 @@ function MemoExportPage({ inp, M }) {
             <>
               <div style={ms.sec}>
                 <div style={ms.secH}>Key Metrics</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", border: "1px solid #e2e8f0", borderRadius: 6, overflow: "hidden" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", border: `1px solid ${docBorder}`, borderRadius: 6, overflow: "hidden" }}>
                   {[
                     [F.eur(inp.price), "Purchase Price"],
                     [F.pct(M.levIRR), "Levered IRR"],
@@ -792,9 +810,9 @@ function MemoExportPage({ inp, M }) {
                     [F.pct(M.coc), "Cash-on-Cash Y1"],
                     [F.pct(M.capIn), "Entry Cap Rate"],
                   ].map(([v, l]) => (
-                    <div key={l} style={{ textAlign: "center", padding: "12px 6px", borderRight: "1px solid #e2e8f0", fontFamily: "sans-serif" }}>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.5px" }}>{v}</div>
-                      <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 3 }}>{l}</div>
+                    <div key={l} style={{ textAlign: "center", padding: "12px 6px", borderRight: `1px solid ${docBorder}`, fontFamily: "sans-serif" }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: dark ? "#f9fafb" : "#0f172a", letterSpacing: "-0.5px" }}>{v}</div>
+                      <div style={{ fontSize: 9, color: docMuted, marginTop: 3 }}>{l}</div>
                     </div>
                   ))}
                 </div>
@@ -802,7 +820,7 @@ function MemoExportPage({ inp, M }) {
 
               <div style={ms.sec}>
                 <div style={ms.secH}>Capital Structure</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", border: "1px solid #e2e8f0", borderRadius: 6, overflow: "hidden" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", border: `1px solid ${docBorder}`, borderRadius: 6, overflow: "hidden" }}>
                   {[
                     [`${inp.ltv}%`, "LTV"],
                     [F.eur(M.loan), "Loan Amount"],
@@ -811,9 +829,9 @@ function MemoExportPage({ inp, M }) {
                     [`${inp.ioYrs} yrs`, "Interest Only"],
                     [F.mul(M.dscr1), "DSCR Year 1"],
                   ].map(([v, l]) => (
-                    <div key={l} style={{ padding: "10px 14px", fontFamily: "sans-serif", borderRight: "1px solid #e2e8f0" }}>
-                      <div style={{ fontSize: 9, color: "#94a3b8" }}>{l}</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginTop: 3 }}>{v}</div>
+                    <div key={l} style={{ padding: "10px 14px", fontFamily: "sans-serif", borderRight: `1px solid ${docBorder}` }}>
+                      <div style={{ fontSize: 9, color: docMuted }}>{l}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: dark ? "#f9fafb" : "#0f172a", marginTop: 3 }}>{v}</div>
                     </div>
                   ))}
                 </div>
@@ -875,9 +893,9 @@ function MemoExportPage({ inp, M }) {
                     ["Exit Cap Rate", `${inp.exitCap}%`],
                     ["Disposal Costs", `${inp.exitCosts}%`],
                   ].map(([l, v]) => (
-                    <div key={l} style={{ background: "#f8fafc", borderRadius: 6, padding: "8px 10px" }}>
-                      <div style={{ fontSize: 9, color: "#94a3b8" }}>{l}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "#334155", marginTop: 2 }}>{v}</div>
+                    <div key={l} style={{ background: dark ? "#1e293b" : "#f8fafc", borderRadius: 6, padding: "8px 10px" }}>
+                      <div style={{ fontSize: 9, color: docMuted }}>{l}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: docText, marginTop: 2 }}>{v}</div>
                     </div>
                   ))}
                 </div>
@@ -902,7 +920,7 @@ function MemoExportPage({ inp, M }) {
 }
 
 /* ─── Page — Deal Analysis ────────────────────────────────── */
-function AnalysisPage({ inp, M }) {
+function AnalysisPage({ inp, M, dark }) {
   const A = useMemo(() => computeAttribution(M, inp), [M, inp]);
   const scenarios = useMemo(() => computeScenarios(inp), [inp]);
   const BE = useMemo(() => computeBreakeven(inp), [inp]);
@@ -928,7 +946,7 @@ function AnalysisPage({ inp, M }) {
           Where the <strong>{F.eur(A.profit)}</strong> of equity profit comes from. Each driver adds up
           to total distributions less the equity invested.
         </div>
-        <AttributionWaterfall items={A.items} />
+        <AttributionWaterfall items={A.items} dark={dark} />
         <div className="attr-grid">
           {A.items.map((it) => (
             <div key={it.key} className="attr-tile">
@@ -1030,6 +1048,15 @@ export default function App() {
 
   const M = useMemo(() => computeModel(inp), [inp]);
 
+  // Dark mode — persist to localStorage
+  const [dark, setDark] = useState(() => {
+    try { return localStorage.getItem("re-theme") === "dark"; } catch { return false; }
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    try { localStorage.setItem("re-theme", dark ? "dark" : "light"); } catch {}
+  }, [dark]);
+
   useEffect(() => {
     const t = setTimeout(() => writeStateToUrl({ inp, wf, tab }), 300);
     return () => clearTimeout(t);
@@ -1106,16 +1133,19 @@ export default function App() {
             {shareMsg || "Share deal"}
           </button>
           <button type="button" className="btn" onClick={handleReset}>Reset</button>
+          <button type="button" className="btn btn-icon" onClick={() => setDark(d => !d)} aria-label="Toggle dark mode" title={dark ? "Light mode" : "Dark mode"}>
+            {dark ? "☀" : "☾"}
+          </button>
         </div>
       </header>
 
       <ErrorBanner errors={M.errors} />
 
       <main className="page-content">
-        {tab === "underwriter" && <UnderwriterPage inp={inp} setInp={setInp} M={M} />}
-        {tab === "analysis" && <AnalysisPage inp={inp} M={M} />}
-        {tab === "waterfall" && <WaterfallPage inp={inp} M={M} wf={wf} setWf={setWf} />}
-        {tab === "memo" && <MemoExportPage inp={inp} M={M} />}
+        {tab === "underwriter" && <UnderwriterPage inp={inp} setInp={setInp} M={M} dark={dark} />}
+        {tab === "analysis" && <AnalysisPage inp={inp} M={M} dark={dark} />}
+        {tab === "waterfall" && <WaterfallPage inp={inp} M={M} wf={wf} setWf={setWf} dark={dark} />}
+        {tab === "memo" && <MemoExportPage inp={inp} M={M} dark={dark} />}
       </main>
 
       <footer className="brand-footer no-print">
