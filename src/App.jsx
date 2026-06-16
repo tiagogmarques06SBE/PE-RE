@@ -14,7 +14,7 @@ import {
   readStateFromUrl, writeStateToUrl,
 } from "./calculations";
 
-import "./styles.css";
+import "../styles.css"
 
 const TABS = [
   { id: "underwriter", label: "Underwriter", icon: "📊" },
