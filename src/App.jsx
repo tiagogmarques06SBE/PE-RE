@@ -23,9 +23,9 @@ const TABS = [
 ];
 
 const BRAND = {
-  name: "Tiago Pereira",
+  name: "Tiago Marques",
   url: "https://peretiago.netlify.app",
-  tagline: "Built by Tiago Pereira · Nova SBE",
+  tagline: "Built by Tiago Marques · Nova SBE",
 };
 
 /* ─── Shared UI ───────────────────────────────────────────── */

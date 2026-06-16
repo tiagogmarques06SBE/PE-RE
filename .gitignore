@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Build output (Netlify builds this for you)
+dist/
+
+# Logs & editor
+*.log
+.DS_Store
+.vscode/
+.idea/
