@@ -96,6 +96,16 @@ export const DEF = {
   exitCap: 5.25,
   exitCosts: 1.5,
   preparedBy: "",
+
+  // ── Optional advanced inputs (defaults are no-ops → base model) ──
+  capex: 0,            // upfront capital expenditure (Uses)
+  leaseUpYrs: 0,       // 0 = stabilised from day 1
+  entryVacancy: 8,     // vacancy at acquisition (ramps to `vacancy`)
+  refiYr: 0,           // 0 = no refinancing
+  refiLtv: 65,         // LTV on refinanced value
+  refiCap: 5.25,       // cap rate used to value at refi
+  refiCosts: 1.0,      // refi costs as % of new loan
+  targetIRR: 15,       // hurdle used by break-even analysis
 };
 
 export const WF_DEF = {
@@ -115,6 +125,8 @@ const INP_KEYS = [
   "grossRev", "vacancy", "opexPct", "noiGrowth",
   "price", "acqCosts", "ltv", "intRate", "amortYrs", "ioYrs",
   "hold", "exitCap", "exitCosts",
+  "capex", "leaseUpYrs", "entryVacancy",
+  "refiYr", "refiLtv", "refiCap", "refiCosts", "targetIRR",
 ];
 
 const WF_KEYS = [
@@ -149,15 +161,33 @@ export function buildLeveredCFs(i, noiOverride) {
   const HP = Math.max(1, Math.round(i.hold));
   const IO = Math.round(i.ioYrs);
   const AY = Math.max(1, Math.round(i.amortYrs));
+  const g = i.noiGrowth / 100;
 
   const egi = i.grossRev * (1 - i.vacancy / 100);
-  const noi = noiOverride ?? egi * (1 - i.opexPct / 100);
+  const noi = noiOverride ?? egi * (1 - i.opexPct / 100); // stabilised NOI
   const capIn = i.price > 0 ? (noi / i.price) * 100 : 0;
 
-  const totalAcq = i.price * (1 + i.acqCosts / 100);
+  const capex = Math.max(0, i.capex || 0);
+  const totalAcq = i.price * (1 + i.acqCosts / 100) + capex;
   const loan = i.price * i.ltv / 100;
   const equity = totalAcq - loan;
-  const annPay = pmt(loan, i.intRate, AY);
+  let annPay = pmt(loan, i.intRate, AY);
+
+  // ── Lease-up: NOI ramps from in-place (entry) to stabilised ──
+  const leaseUp = Math.max(0, Math.round(i.leaseUpYrs || 0));
+  const entryVac = i.entryVacancy != null ? i.entryVacancy : i.vacancy;
+  const entryNOI = i.grossRev * (1 - entryVac / 100) * (1 - i.opexPct / 100);
+  const noiAt = (yr) => {
+    const grown = noi * (1 + g) ** (yr - 1);
+    if (leaseUp <= 0 || yr >= leaseUp) return grown;
+    return entryNOI + (grown - entryNOI) * (yr / leaseUp);
+  };
+
+  // ── Refinancing (cash-out) ──
+  const refiYr = Math.max(0, Math.round(i.refiYr || 0));
+  const refiActive = refiYr > 0 && refiYr < HP;
+  const refiCapR = i.refiCap != null ? i.refiCap : i.exitCap;
+  let refiEvent = null;
 
   const rows = [];
   const levCF = [-equity];
@@ -165,18 +195,33 @@ export function buildLeveredCFs(i, noiOverride) {
   let bal = loan;
 
   for (let yr = 1; yr <= HP; yr++) {
-    const yrNOI = noi * (1 + i.noiGrowth / 100) ** (yr - 1);
+    const yrNOI = noiAt(yr);
     const int_ = bal * i.intRate / 100;
     const ds = yr <= IO ? int_ : annPay;
     const prin = yr <= IO ? 0 : Math.max(0, Math.min(ds - int_, bal));
     bal = Math.max(0, bal - prin);
 
-    const cfads = yrNOI - ds;
     const dscr = ds > 0 ? yrNOI / ds : null;
+
+    // Refinance at end of year (forward stabilised NOI / refi cap)
+    let cashOut = 0;
+    if (refiActive && yr === refiYr) {
+      const oldBal = bal;
+      const refiNOIfwd = noi * (1 + g) ** yr;
+      const refiValue = refiCapR > 0 ? refiNOIfwd / (refiCapR / 100) : 0;
+      const newLoan = refiValue * (i.refiLtv / 100);
+      const refiCostAmt = newLoan * ((i.refiCosts || 0) / 100);
+      cashOut = newLoan - oldBal - refiCostAmt;
+      bal = newLoan;
+      annPay = pmt(newLoan, i.intRate, AY);
+      refiEvent = { yr, refiValue, newLoan, oldBal, cashOut };
+    }
+
+    const cfads = yrNOI - ds;
     let exitEq = 0;
 
     if (yr === HP) {
-      const xnoi = noi * (1 + i.noiGrowth / 100) ** HP;
+      const xnoi = noi * (1 + g) ** HP;
       const gs = i.exitCap > 0 ? xnoi / (i.exitCap / 100) : 0;
       exitEq = gs * (1 - i.exitCosts / 100) - bal;
       unlevCF.push(yrNOI + gs * (1 - i.exitCosts / 100));
@@ -184,8 +229,8 @@ export function buildLeveredCFs(i, noiOverride) {
       unlevCF.push(yrNOI);
     }
 
-    rows.push({ yr, yrNOI, int: int_, prin, ds, cfads, dscr, bal, exitEq });
-    levCF.push(cfads + exitEq);
+    rows.push({ yr, yrNOI, int: int_, prin, ds, cfads, dscr, bal, exitEq, cashOut });
+    levCF.push(cfads + exitEq + cashOut);
   }
 
   const dscrValues = rows.map((r) => r.dscr).filter((v) => v != null && isFinite(v));
@@ -195,10 +240,13 @@ export function buildLeveredCFs(i, noiOverride) {
   return {
     egi,
     noi,
+    entryNOI,
     capIn,
     loan,
     equity,
     totalAcq,
+    capex,
+    refiEvent,
     rows,
     levCF,
     unlevCF,
@@ -242,10 +290,16 @@ export function computeModel(i) {
   const mom = totalRec / equity;
   const coc = rows[0] ? (rows[0].cfads / equity) * 100 : NaN;
 
-  if (!isFinite(levIRR) || !isFinite(mom)) {
+  // Only the equity multiple must be computable for the deal to be shown.
+  // A levered IRR can legitimately not exist (e.g. capital is never fully
+  // returned, so NPV has no root) — in that case we still surface the full
+  // model and render IRR as "N/M" rather than blanking the whole screen.
+  if (!isFinite(mom)) {
     base.errors.push("Model produced invalid returns — check LTV, hold period, and exit assumptions.");
     return base;
   }
+
+  const noIRR = !isFinite(levIRR);
 
   return {
     ...base,
@@ -254,6 +308,7 @@ export function computeModel(i) {
     mom,
     coc,
     totalDist: totalRec,
+    noIRR,
     valid: true,
     errors: [],
   };
@@ -390,6 +445,147 @@ export function irrS(v) {
   return { background: "#059669", color: "#fff" };
 }
 
+/* ─── Sources & Uses (capital stack) ──────────────────────── */
+export function computeSourcesUses(M, i) {
+  const acqCostsAmt = i.price * (i.acqCosts / 100);
+  const capex = M.capex || 0;
+
+  const uses = [
+    { label: "Purchase Price", val: i.price },
+    { label: "Acquisition Costs", val: acqCostsAmt },
+  ];
+  if (capex > 0) uses.push({ label: "Capital Expenditure", val: capex });
+  const totalUses = uses.reduce((a, x) => a + x.val, 0);
+
+  const sources = [
+    { label: "Senior Debt", val: M.loan, pct: totalUses ? (M.loan / totalUses) * 100 : 0 },
+    { label: "Sponsor Equity", val: M.equity, pct: totalUses ? (M.equity / totalUses) * 100 : 0 },
+  ];
+  const totalSources = M.loan + M.equity;
+
+  return { uses, sources, totalUses, totalSources };
+}
+
+/* ─── Returns attribution / value-creation bridge ─────────────
+   Exact decomposition of levered equity profit. The components below
+   sum identically to (total distributions − equity invested). ────── */
+export function computeAttribution(M, i) {
+  if (!M.valid) return { valid: false, items: [], profit: 0, equity: 0, totalReturned: 0 };
+
+  const HP = M.HP;
+  const g = i.noiGrowth / 100;
+  const noiEntry = M.noi;
+  const noiExit = noiEntry * (1 + g) ** HP;
+  const entryCapF = i.price > 0 ? noiEntry / i.price : 0;     // fraction
+  const exitCapF = i.exitCap / 100;
+  const exitGross = exitCapF > 0 ? noiExit / exitCapF : 0;
+
+  const disposal = exitGross * (i.exitCosts / 100);
+  const acqCostsAmt = i.price * (i.acqCosts / 100);
+  const capex = M.capex || 0;
+  const opIncome = M.rows.reduce((a, r) => a + r.cfads, 0);
+  const refiProceeds = M.rows.reduce((a, r) => a + (r.cashOut || 0), 0);
+  const balExit = M.rows[HP - 1].bal;
+  const debtPaydown = M.loan - balExit;
+  const noiGrowthVal = entryCapF > 0 ? (noiExit - noiEntry) / entryCapF : 0;
+  const capMoveVal = noiExit * (1 / exitCapF - (entryCapF > 0 ? 1 / entryCapF : 0));
+
+  const items = [
+    { key: "income",   label: "Operating Cash Flow", val: opIncome },
+    { key: "noi",      label: "NOI Growth",          val: noiGrowthVal },
+    { key: "cap",      label: "Cap Rate Movement",   val: capMoveVal },
+    { key: "paydown",  label: "Debt Amortisation",   val: debtPaydown },
+  ];
+  if (refiProceeds !== 0) items.splice(1, 0, { key: "refi", label: "Refinancing Proceeds", val: refiProceeds });
+  items.push({ key: "disposal", label: "Disposal Costs", val: -disposal });
+  items.push({ key: "acq", label: "Acquisition Costs", val: -acqCostsAmt });
+  if (capex > 0) items.push({ key: "capex", label: "Capital Expenditure", val: -capex });
+
+  const profit = items.reduce((a, x) => a + x.val, 0);
+  return { valid: true, items, profit, equity: M.equity, totalReturned: M.totalDist };
+}
+
+/* ─── Break-even / "what kills the deal" ──────────────────────
+   Numeric root-finding by fine scan + linear interpolation. ───── */
+function solveCrossing(fn, lo, hi, target, steps = 240) {
+  let prevX = lo, prevY = fn(lo);
+  for (let k = 1; k <= steps; k++) {
+    const x = lo + ((hi - lo) * k) / steps;
+    const y = fn(x);
+    if (isFinite(prevY) && isFinite(y) && (prevY - target) * (y - target) <= 0 && prevY !== y) {
+      const t = (target - prevY) / (y - prevY);
+      return prevX + (x - prevX) * t;
+    }
+    prevX = x; prevY = y;
+  }
+  return null;
+}
+
+export function computeBreakeven(i) {
+  const irrAtCap = (ec) => {
+    const b = buildLeveredCFs({ ...i, exitCap: ec });
+    if (!b || b.equity <= 0) return NaN;
+    const v = calcIRR(b.levCF) * 100;
+    return isFinite(v) ? v : NaN;
+  };
+  const irrAtPrice = (p) => {
+    const b = buildLeveredCFs({ ...i, price: p });
+    if (!b || b.equity <= 0) return NaN;
+    const v = calcIRR(b.levCF) * 100;
+    return isFinite(v) ? v : NaN;
+  };
+  const dscrAtVac = (vac) => {
+    const b = buildLeveredCFs({ ...i, vacancy: vac });
+    return b.rows[0]?.dscr ?? NaN;
+  };
+
+  const hurdle = 8;
+  const target = i.targetIRR || 15;
+
+  return {
+    hurdle,
+    target,
+    capAtZero: solveCrossing(irrAtCap, 1, 15, 0),
+    capAtHurdle: solveCrossing(irrAtCap, 1, 15, hurdle),
+    capAtTarget: solveCrossing(irrAtCap, 1, 15, target),
+    maxPriceTarget: solveCrossing(irrAtPrice, i.price * 0.5, i.price * 2, target),
+    breakevenVacancy: solveCrossing(dscrAtVac, i.vacancy, 100, 1),
+  };
+}
+
+/* ─── Scenario analysis (Bear / Base / Bull) ──────────────── */
+export const SCENARIOS = {
+  bear: { label: "Bear", dCap: 0.75, dGrowth: -1.5, dVac: 4 },
+  base: { label: "Base", dCap: 0, dGrowth: 0, dVac: 0 },
+  bull: { label: "Bull", dCap: -0.5, dGrowth: 1.0, dVac: -2 },
+};
+
+export function applyScenario(i, key) {
+  const s = SCENARIOS[key];
+  if (!s) return { ...i };
+  return {
+    ...i,
+    exitCap: Math.max(0.5, i.exitCap + s.dCap),
+    noiGrowth: i.noiGrowth + s.dGrowth,
+    vacancy: Math.min(100, Math.max(0, i.vacancy + s.dVac)),
+  };
+}
+
+export function computeScenarios(i) {
+  return Object.keys(SCENARIOS).map((k) => {
+    const M = computeModel(applyScenario(i, k));
+    return {
+      key: k,
+      label: SCENARIOS[k].label,
+      levIRR: M.levIRR,
+      mom: M.mom,
+      equity: M.equity,
+      valid: M.valid,
+      noIRR: M.noIRR,
+    };
+  });
+}
+
 /* ─── URL state encoding (shareable deals) ─────────────────── */
 export function encodeAppState({ inp, wf, tab }) {
   const payload = {
@@ -420,7 +616,7 @@ export function decodeAppState(encoded) {
       if (payload.wf?.[k] !== undefined) wf[k] = payload.wf[k];
     });
 
-    const tab = ["underwriter", "waterfall", "memo"].includes(payload.tab)
+    const tab = ["underwriter", "analysis", "waterfall", "memo"].includes(payload.tab)
       ? payload.tab
       : "underwriter";
 
