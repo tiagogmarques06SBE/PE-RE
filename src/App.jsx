@@ -213,52 +213,6 @@ function TornadoChart({ data }) {
   );
 }
 
-/* ─── Export the full cash-flow schedule to a spreadsheet ──── */
-function exportSchedule(inp, M) {
-  const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
-  const r0 = (n) => (isFinite(n) ? Math.round(n) : "");
-  const r2 = (n) => (isFinite(n) ? (+n).toFixed(2) : "");
-  const lines = [];
-
-  lines.push([q(inp.dealName || "Untitled Deal"), q(AC[inp.assetClass]?.name || "")].join(","));
-  lines.push("");
-  lines.push(["Metric", "Value"].map(q).join(","));
-  const summary = [
-    ["Purchase Price", r0(inp.price)],
-    ["Equity Required", r0(M.equity)],
-    ["Senior Debt", r0(M.loan)],
-    ["Entry Cap Rate (%)", r2(M.capIn)],
-    ["Levered IRR (%)", M.noIRR ? "N/M" : r2(M.levIRR)],
-    ["Unlevered IRR (%)", r2(M.unlevIRR)],
-    ["Equity Multiple (x)", r2(M.mom)],
-    ["DSCR Year 1 (x)", r2(M.dscr1)],
-  ];
-  summary.forEach((row) => lines.push(row.map(q).join(",")));
-  lines.push("");
-
-  const head = ["Year", "NOI", "Interest", "Principal", "Debt Service", "CFADS", "DSCR", "Loan Balance", "Cash-Out (Refi)", "Exit Equity"];
-  lines.push(head.map(q).join(","));
-  lines.push(["0 (Acquisition)", "", "", "", "", -r0(M.equity), "", r0(M.loan), "", ""].map(q).join(","));
-  M.rows.forEach((d) => {
-    lines.push([
-      d.yr, r0(d.yrNOI), r0(d.int), r0(d.prin), r0(d.ds),
-      r0(d.cfads), r2(d.dscr), r0(d.bal), r0(d.cashOut), r0(d.exitEq),
-    ].map(q).join(","));
-  });
-
-  const csv = "﻿" + lines.join("\r\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const safe = (inp.dealName || "deal").replace(/[^a-z0-9]+/gi, "_").toLowerCase();
-  a.href = url;
-  a.download = `${safe}_cashflow.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 function ErrorBanner({ errors }) {
   if (!errors?.length) return null;
   return (
@@ -419,12 +373,7 @@ function UnderwriterPage({ inp, setInp, M }) {
         {M.valid && <SourcesUsesCard inp={inp} M={M} />}
 
         <div className="card">
-          <div className="card-head">
-            <div className="card-title" style={{ marginBottom: 0 }}>Cash Flow &amp; Debt Schedule</div>
-            <button type="button" className="btn btn-export" onClick={() => exportSchedule(inp, M)} disabled={!M.valid}>
-              ↓ Export to Excel
-            </button>
-          </div>
+          <div className="card-title">Cash Flow &amp; Debt Schedule</div>
           <div className="table-scroll">
             <table className="data-table">
               <thead>
@@ -602,7 +551,7 @@ function WaterfallPage({ inp, M, wf, setWf }) {
     <div className="page-layout">
       <aside className="sidebar">
         <div className="highlight-box" style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 4 }}>TOTAL EQUITY POOL</div>
+          <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 4 }}>Total equity pool</div>
           <div style={{ fontSize: 18, fontWeight: 700, color: "#1d4ed8" }}>{F.eur(M.totalDist)}</div>
           <div style={{ fontSize: 9, color: "#64748b", marginTop: 2 }}>
             All distributions to equity · Deal MoM: {F.mul(M.mom)}
@@ -734,7 +683,7 @@ function WaterfallPage({ inp, M, wf, setWf }) {
                     </tr>
                   ))}
                   <tr style={{ borderTop: "2px solid #e2e8f0", background: "#f8fafc" }}>
-                    <td style={{ fontWeight: 700 }}>TOTAL</td>
+                    <td style={{ fontWeight: 700 }}>Total</td>
                     <td style={{ textAlign: "right", fontWeight: 700, color: "#1d4ed8", fontSize: 12 }}>{F.eur(W.lpTotal)}</td>
                     <td style={{ textAlign: "right", fontWeight: 700, color: "#7c3aed", fontSize: 12 }}>{F.eur(W.gpTotal)}</td>
                     <td style={{ textAlign: "right", fontWeight: 600, color: "#475569" }}>
@@ -788,7 +737,7 @@ function MemoExportPage({ inp, M }) {
   const ms = {
     hdr: { background: "#0f172a", padding: "28px 36px", color: "#fff" },
     sec: { padding: "18px 36px", borderBottom: "1px solid #e2e8f0" },
-    secH: { fontSize: 9, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "sans-serif" },
+    secH: { fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 10, fontFamily: "sans-serif" },
     body: { fontSize: 11, color: "#334155", lineHeight: 1.6, fontFamily: "sans-serif" },
     foot: { background: "#f8fafc", padding: "12px 36px", borderTop: "1px solid #e2e8f0" },
   };
@@ -798,15 +747,11 @@ function MemoExportPage({ inp, M }) {
       <div className="memo-control-bar no-print">
         <div>
           <div style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600 }}>Investment Memo</div>
-          <div style={{ color: "#64748b", fontSize: 10 }}>Preview below · use Ctrl+P / ⌘+P to save as PDF</div>
         </div>
         <div style={{ flex: 1 }} />
         {inp.preparedBy && (
           <div style={{ color: "#94a3b8", fontSize: 11 }}>Prepared by: {inp.preparedBy}</div>
         )}
-        <button type="button" className="btn btn-export" onClick={() => exportSchedule(inp, M)} disabled={!M.valid} aria-label="Export cash flow to Excel">
-          ↓ Export to Excel
-        </button>
         <button type="button" className="btn btn-primary" onClick={() => window.print()} aria-label="Print or save as PDF">
           Save as PDF
         </button>
@@ -815,8 +760,8 @@ function MemoExportPage({ inp, M }) {
       <div className="memo-preview-wrap">
         <div className="memo-doc">
           <div style={ms.hdr}>
-            <div style={{ fontSize: 10, color: "#475569", marginBottom: 4, letterSpacing: "0.1em", fontFamily: "sans-serif" }}>
-              INVESTMENT MEMORANDUM
+            <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4, fontFamily: "sans-serif" }}>
+              Investment Memorandum
             </div>
             <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.5px" }}>{inp.dealName}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 8, fontSize: 10, color: "#94a3b8", fontFamily: "sans-serif" }}>
@@ -942,7 +887,7 @@ function MemoExportPage({ inp, M }) {
 
           <div style={ms.foot}>
             <div style={{ fontSize: 9, color: "#94a3b8", lineHeight: 1.5, fontFamily: "sans-serif" }}>
-              <strong>DISCLAIMER</strong> · For illustrative purposes only. This document does not
+              <strong>Disclaimer</strong> · For illustrative purposes only. This document does not
               constitute an offer to sell or a solicitation to buy any security. All projections are
               based on stated assumptions and are not guaranteed. Past performance is not indicative
               of future results.
