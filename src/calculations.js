@@ -242,10 +242,16 @@ export function computeModel(i) {
   const mom = totalRec / equity;
   const coc = rows[0] ? (rows[0].cfads / equity) * 100 : NaN;
 
-  if (!isFinite(levIRR) || !isFinite(mom)) {
+  // Only the equity multiple must be computable for the deal to be shown.
+  // A levered IRR can legitimately not exist (e.g. capital is never fully
+  // returned, so NPV has no root) — in that case we still surface the full
+  // model and render IRR as "N/M" rather than blanking the whole screen.
+  if (!isFinite(mom)) {
     base.errors.push("Model produced invalid returns — check LTV, hold period, and exit assumptions.");
     return base;
   }
+
+  const noIRR = !isFinite(levIRR);
 
   return {
     ...base,
@@ -254,6 +260,7 @@ export function computeModel(i) {
     mom,
     coc,
     totalDist: totalRec,
+    noIRR,
     valid: true,
     errors: [],
   };

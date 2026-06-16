@@ -195,6 +195,42 @@ function UnderwriterPage({ inp, setInp, M }) {
             Adjust inputs to restore full metrics and charts.
           </div>
         )}
+
+        <div className="hero">
+          <div className="hero-glow" aria-hidden="true" />
+          <div className="hero-head">
+            <div>
+              <div className="hero-eyebrow">{cfg.name} · {M.HP}-Year Hold</div>
+              <div className="hero-deal">{inp.dealName || "Untitled Deal"}</div>
+            </div>
+            <div className={`hero-verdict ${M.valid ? (M.levIRR >= 15 ? "good" : M.levIRR >= 10 ? "ok" : "weak") : "weak"}`}>
+              {M.valid
+                ? M.noIRR ? "Capital not returned"
+                  : M.levIRR >= 15 ? "Above target return"
+                  : M.levIRR >= 10 ? "Moderate return"
+                  : "Below target return"
+                : "Inputs incomplete"}
+            </div>
+          </div>
+          <div className="hero-kpis">
+            <div className="hero-kpi">
+              <div className="hero-kpi-label">Levered IRR</div>
+              <div className="hero-kpi-val">{M.noIRR ? "N/M" : F.pct(M.levIRR)}</div>
+              <div className="hero-kpi-sub">Unlevered {F.pct(M.unlevIRR)}</div>
+            </div>
+            <div className="hero-kpi">
+              <div className="hero-kpi-label">Equity Multiple</div>
+              <div className="hero-kpi-val">{F.mul(M.mom)}</div>
+              <div className="hero-kpi-sub">over {M.HP} years</div>
+            </div>
+            <div className="hero-kpi">
+              <div className="hero-kpi-label">Equity Required</div>
+              <div className="hero-kpi-val">{F.eur(M.equity)}</div>
+              <div className="hero-kpi-sub">{(100 - inp.ltv).toFixed(0)}% of price + costs</div>
+            </div>
+          </div>
+        </div>
+
         <div className="metric-grid">
           <MCard hi label="Levered IRR" val={F.pct(M.levIRR)} sub={`Unlevered IRR: ${F.pct(M.unlevIRR)}`} />
           <MCard label="Equity Multiple (MoM)" val={F.mul(M.mom)} sub={`Equity: ${F.eur(M.equity)}`} />
