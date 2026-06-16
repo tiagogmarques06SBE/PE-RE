@@ -2,22 +2,38 @@
 // calculations.js — Core financial logic
 // ============================================================
 
-/* ─── IRR (Newton-Raphson solver) ─────────────────────────── */
+/* ─── IRR (Newton-Raphson + bisection fallback) ───────────── */
 export function calcIRR(cfs, g = 0.1) {
+  const hasOutflow = cfs.some(c => c < 0);
+  const hasInflow = cfs.some(c => c > 0);
+  if (!hasOutflow || !hasInflow) return NaN;
+
+  const npv = (r) => cfs.reduce((sum, c, t) => sum + c / (1 + r) ** t, 0);
+
   let r = g;
   for (let i = 0; i < 400; i++) {
     let f = 0, df = 0;
     cfs.forEach((c, t) => {
       const d = (1 + r) ** t;
-      f  += c / d;
+      f += c / d;
       df -= t * c / (d * (1 + r));
     });
     if (!isFinite(f) || Math.abs(df) < 1e-14) break;
     const r2 = r - f / df;
-    if (Math.abs(r2 - r) < 1e-9) return r2;
+    if (Math.abs(r2 - r) < 1e-9) return isFinite(r2) ? r2 : NaN;
     r = Math.max(-0.99, Math.min(50, r2));
   }
-  return r;
+
+  let lo = -0.99, hi = 5;
+  if (npv(lo) * npv(hi) > 0) return NaN;
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    const v = npv(mid);
+    if (Math.abs(v) < 1e-8 || hi - lo < 1e-9) return mid;
+    if (v * npv(lo) <= 0) hi = mid;
+    else lo = mid;
+  }
+  return NaN;
 }
 
 /* ─── Annuity payment (PMT equivalent) ───────────────────── */
@@ -30,13 +46,13 @@ export function pmt(P, rPct, n) {
 /* ─── Number formatters ───────────────────────────────────── */
 export const F = {
   pct: (v, d = 1) => isFinite(v) ? `${(+v).toFixed(d)}%` : "—",
-  mul: v          => isFinite(v) ? `${(+v).toFixed(2)}×`  : "—",
+  mul: v => isFinite(v) ? `${(+v).toFixed(2)}×` : "—",
   eur: v => {
     if (!isFinite(v)) return "—";
     const s = v < 0 ? "−" : "", a = Math.abs(v);
-    return a >= 1e6 ? `${s}€${(a / 1e6).toFixed(2)}M`
-         : a >= 1e3 ? `${s}€${(a / 1e3).toFixed(0)}K`
-         : `${s}€${a.toFixed(0)}`;
+    if (a >= 1e6) return `${s}€${(a / 1e6).toFixed(2)}M`;
+    if (a >= 1e3) return `${s}€${(a / 1e3).toFixed(1)}K`;
+    return `${s}€${a.toFixed(0)}`;
   },
 };
 
@@ -65,38 +81,74 @@ export const WF_DEF = {
   t1LP:80, t1GP:20, t2LP:60, t2GP:40, t2EMThreshold:2.0,
 };
 
-/* ─── Core deal model ─────────────────────────────────────── */
-export function computeModel(i) {
+const INP_KEYS = [
+  "dealName", "assetClass", "preparedBy",
+  "grossRev", "vacancy", "opexPct", "noiGrowth",
+  "price", "acqCosts", "ltv", "intRate", "amortYrs", "ioYrs",
+  "hold", "exitCap", "exitCosts",
+];
+
+const WF_KEYS = [
+  "lpPct", "gpPct", "hurdle", "catchUp",
+  "t1LP", "t1GP", "t2LP", "t2GP", "t2EMThreshold",
+];
+
+/* ─── Input validation ────────────────────────────────────── */
+export function validateInputs(i) {
+  const errors = [];
+  if (!i.price || i.price <= 0) errors.push("Purchase price must be positive.");
+  if (i.grossRev < 0) errors.push("Revenue cannot be negative.");
+  if (i.vacancy < 0 || i.vacancy > 100) errors.push("Vacancy must be between 0% and 100%.");
+  if (i.opexPct < 0 || i.opexPct > 100) errors.push("OpEx must be between 0% and 100%.");
+  if (i.ltv < 0 || i.ltv > 100) errors.push("LTV must be between 0% and 100%.");
+  if (i.intRate < 0 || i.intRate > 30) errors.push("Interest rate must be between 0% and 30%.");
+  if (i.exitCap <= 0 || i.exitCap > 30) errors.push("Exit cap rate must be between 0% and 30%.");
+  if (i.hold < 1 || i.hold > 30) errors.push("Hold period must be between 1 and 30 years.");
+  if (i.amortYrs < 1) errors.push("Amortisation must be at least 1 year.");
+  if (i.ioYrs < 0 || i.ioYrs > i.hold) errors.push("Interest-only period cannot exceed hold period.");
+
+  const totalAcq = i.price * (1 + i.acqCosts / 100);
+  const loan = i.price * i.ltv / 100;
+  if (totalAcq - loan <= 0) {
+    errors.push("Equity must be positive — reduce LTV or check acquisition costs.");
+  }
+  return errors;
+}
+
+/* ─── Shared levered cash-flow builder ────────────────────── */
+export function buildLeveredCFs(i, noiOverride) {
   const HP = Math.max(1, Math.round(i.hold));
   const IO = Math.round(i.ioYrs);
   const AY = Math.max(1, Math.round(i.amortYrs));
 
-  const egi   = i.grossRev * (1 - i.vacancy / 100);
-  const noi   = egi * (1 - i.opexPct / 100);
+  const egi = i.grossRev * (1 - i.vacancy / 100);
+  const noi = noiOverride ?? egi * (1 - i.opexPct / 100);
   const capIn = i.price > 0 ? noi / i.price * 100 : 0;
 
   const totalAcq = i.price * (1 + i.acqCosts / 100);
-  const loan     = i.price * i.ltv / 100;
-  const equity   = totalAcq - loan;
-  const annPay   = pmt(loan, i.intRate, AY);
+  const loan = i.price * i.ltv / 100;
+  const equity = totalAcq - loan;
+  const annPay = pmt(loan, i.intRate, AY);
 
-  const rows = [], levCF = [-equity], unlevCF = [-totalAcq];
+  const rows = [];
+  const levCF = [-equity];
+  const unlevCF = [-totalAcq];
   let bal = loan;
 
   for (let yr = 1; yr <= HP; yr++) {
     const yrNOI = noi * (1 + i.noiGrowth / 100) ** (yr - 1);
-    const int_  = bal * i.intRate / 100;
-    const ds    = yr <= IO ? int_ : annPay;
-    const prin  = yr <= IO ? 0 : Math.max(0, Math.min(ds - int_, bal));
+    const int_ = bal * i.intRate / 100;
+    const ds = yr <= IO ? int_ : annPay;
+    const prin = yr <= IO ? 0 : Math.max(0, Math.min(ds - int_, bal));
     bal = Math.max(0, bal - prin);
 
     const cfads = yrNOI - ds;
-    const dscr  = ds > 0 ? yrNOI / ds : null;
-    let exitEq  = 0;
+    const dscr = ds > 0 ? yrNOI / ds : null;
+    let exitEq = 0;
 
     if (yr === HP) {
       const xnoi = noi * (1 + i.noiGrowth / 100) ** HP;
-      const gs   = i.exitCap > 0 ? xnoi / (i.exitCap / 100) : 0;
+      const gs = i.exitCap > 0 ? xnoi / (i.exitCap / 100) : 0;
       exitEq = gs * (1 - i.exitCosts / 100) - bal;
       unlevCF.push(yrNOI + gs * (1 - i.exitCosts / 100));
     } else {
@@ -107,117 +159,236 @@ export function computeModel(i) {
     levCF.push(cfads + exitEq);
   }
 
-  const levIRR   = calcIRR(levCF)   * 100;
-  const unlevIRR = calcIRR(unlevCF) * 100;
-  const totalRec = levCF.slice(1).reduce((a, b) => a + b, 0);
-  const mom      = equity > 0 ? totalRec / equity : NaN;
-  const coc      = equity > 0 && rows[0] ? rows[0].cfads / equity * 100 : NaN;
+  const dscrValues = rows.map(r => r.dscr).filter(v => v != null && isFinite(v));
+  const minDSCR = dscrValues.length ? Math.min(...dscrValues) : null;
+  const minDSCRYear = minDSCR != null
+    ? rows.find(r => r.dscr === minDSCR)?.yr ?? null
+    : null;
 
   return {
-    egi, noi, capIn, loan, equity, totalAcq,
-    levIRR, unlevIRR, mom, coc,
-    dscr1: rows[0]?.dscr,
-    rows, levCF,
-    totalDist: totalRec,
-    HP, IO,
+    egi, noi, capIn, loan, equity, totalAcq, rows, levCF, unlevCF,
+    HP, IO, minDSCR, minDSCRYear,
   };
+}
+
+/* ─── Core deal model ─────────────────────────────────────── */
+export function computeModel(i) {
+  const errors = validateInputs(i);
+  const built = buildLeveredCFs(i);
+  const { equity, levCF, unlevCF, rows, ...rest } = built;
+
+  const base = {
+    ...rest, equity, rows, levCF,
+    levIRR: NaN, unlevIRR: NaN, mom: NaN, coc: NaN,
+    dscr1: rows[0]?.dscr,
+    totalDist: 0,
+    valid: false,
+    errors: [...errors],
+  };
+
+  if (errors.length) return base;
+  if (equity <= 0) {
+    base.errors.push("Equity must be positive.");
+    return base;
+  }
+
+  const levIRR = calcIRR(levCF) * 100;
+  const unlevIRR = calcIRR(unlevCF) * 100;
+  const totalRec = levCF.slice(1).reduce((a, b) => a + b, 0);
+  const mom = totalRec / equity;
+  const coc = rows[0] ? rows[0].cfads / equity * 100 : NaN;
+
+  if (!isFinite(levIRR) || !isFinite(mom)) {
+    base.errors.push("Model produced invalid returns — check LTV, hold period, and exit assumptions.");
+    return base;
+  }
+
+  return {
+    ...base,
+    levIRR, unlevIRR, mom, coc,
+    totalDist: totalRec,
+    valid: true,
+    errors: [],
+  };
+}
+
+/* ─── Incremental LP/GP waterfall allocation ────────────────── */
+function allocateDistribution(dist, state, wf, lpCap, gpCap, HP) {
+  let rem = Math.max(0, dist);
+  const yr = { lp: 0, gp: 0 };
+  if (rem <= 0) return yr;
+
+  const hurdle = wf.hurdle / 100;
+  const t1LP = wf.t1LP / 100, t1GP = wf.t1GP / 100;
+  const t2LP = wf.t2LP / 100, t2GP = wf.t2GP / 100;
+  const lpPrefTarget = lpCap * ((1 + hurdle) ** HP - 1);
+
+  const lpROC = Math.min(rem, Math.max(0, lpCap - state.lpROC));
+  yr.lp += lpROC; state.lpROC += lpROC; rem -= lpROC;
+
+  const gpROC = Math.min(rem, Math.max(0, gpCap - state.gpROC));
+  yr.gp += gpROC; state.gpROC += gpROC; rem -= gpROC;
+
+  const lpPref = Math.min(rem, Math.max(0, lpPrefTarget - state.lpPref));
+  yr.lp += lpPref; state.lpPref += lpPref; rem -= lpPref;
+
+  if (wf.catchUp && rem > 0 && t1LP > 0) {
+    const catchUpTarget = state.lpPref * t1GP / t1LP;
+    const gpCatch = Math.min(rem, Math.max(0, catchUpTarget - state.gpCatchUp));
+    yr.gp += gpCatch; state.gpCatchUp += gpCatch; rem -= gpCatch;
+  }
+
+  const lpNeedForT2 = Math.max(0, lpCap * wf.t2EMThreshold - state.lpROC - state.lpPref);
+  if (rem > 0 && lpNeedForT2 > 0 && t1LP > 0) {
+    const pool = Math.min(rem, lpNeedForT2 / t1LP);
+    const lpT1 = pool * t1LP, gpT1 = pool * t1GP;
+    yr.lp += lpT1; yr.gp += gpT1;
+    state.lpT1 += lpT1; state.gpT1 += gpT1;
+    rem -= pool;
+  }
+
+  if (rem > 0) {
+    const lpT2 = rem * t2LP, gpT2 = rem * t2GP;
+    yr.lp += lpT2; yr.gp += gpT2;
+    state.lpT2 += lpT2; state.gpT2 += gpT2;
+  }
+
+  return yr;
 }
 
 /* ─── LP/GP Waterfall ─────────────────────────────────────── */
 export function computeWaterfall(M, wf) {
-  const { equity, totalDist, HP } = M;
-  const lpPct  = wf.lpPct  / 100,  gpPct  = wf.gpPct  / 100;
-  const hurdle = wf.hurdle / 100;
-  const t1LP   = wf.t1LP   / 100,  t1GP   = wf.t1GP   / 100;
-  const t2LP   = wf.t2LP   / 100,  t2GP   = wf.t2GP   / 100;
-  const lpCap  = equity * lpPct,   gpCap  = equity * gpPct;
-
-  let rem = Math.max(0, totalDist);
-
-  const lpROC = Math.min(rem, lpCap); rem -= lpROC;
-  const gpROC = Math.min(rem, gpCap); rem -= gpROC;
-
-  const lpPref = Math.min(rem, lpCap * ((1 + hurdle) ** HP - 1)); rem -= lpPref;
-
-  let gpCatchUp = 0;
-  if (wf.catchUp && rem > 0 && t1LP > 0) {
-    gpCatchUp = Math.min(rem, lpPref * t1GP / t1LP); rem -= gpCatchUp;
+  if (!M.valid) {
+    return {
+      lpCap: 0, gpCap: 0,
+      lpROC: 0, gpROC: 0, lpPref: 0, gpCatchUp: 0,
+      lpT1: 0, gpT1: 0, lpT2: 0, gpT2: 0,
+      lpTotal: 0, gpTotal: 0, gpPromote: 0,
+      lpMoM: 0, gpMoM: 0, lpIRR: NaN, gpIRR: NaN,
+      valid: false,
+    };
   }
 
-  let lpT1 = 0, gpT1 = 0;
-  const lpNeedForT2 = Math.max(0, lpCap * wf.t2EMThreshold - lpROC - lpPref);
-  if (rem > 0 && lpNeedForT2 > 0 && t1LP > 0) {
-    const pool = Math.min(rem, lpNeedForT2 / t1LP);
-    lpT1 = pool * t1LP; gpT1 = pool * t1GP; rem -= pool;
+  const { equity, rows, HP } = M;
+  const lpPct = wf.lpPct / 100, gpPct = wf.gpPct / 100;
+  const lpCap = equity * lpPct, gpCap = equity * gpPct;
+
+  const state = {
+    lpROC: 0, gpROC: 0, lpPref: 0, gpCatchUp: 0,
+    lpT1: 0, gpT1: 0, lpT2: 0, gpT2: 0,
+  };
+
+  const lpCF = [-lpCap];
+  const gpCF = [-gpCap];
+
+  for (let yr = 1; yr <= HP; yr++) {
+    const row = rows[yr - 1];
+    let dist = Math.max(0, row.cfads);
+    if (yr === HP) dist += Math.max(0, row.exitEq);
+
+    const split = allocateDistribution(dist, state, wf, lpCap, gpCap, HP);
+    lpCF.push(split.lp);
+    gpCF.push(split.gp);
   }
 
-  const lpT2 = rem * t2LP, gpT2 = rem * t2GP;
-
-  const lpTotal   = lpROC + lpPref + lpT1 + lpT2;
-  const gpTotal   = gpROC + gpCatchUp + gpT1 + gpT2;
-  const gpPromote = gpCatchUp + gpT1 + gpT2;
-
-  const z = (cap, total) =>
-    cap > 0 ? calcIRR([-cap, ...Array(HP - 1).fill(0), total]) * 100 : 0;
+  const lpTotal = state.lpROC + state.lpPref + state.lpT1 + state.lpT2;
+  const gpTotal = state.gpROC + state.gpCatchUp + state.gpT1 + state.gpT2;
+  const gpPromote = state.gpCatchUp + state.gpT1 + state.gpT2;
 
   return {
     lpCap, gpCap,
-    lpROC, gpROC,
-    lpPref, gpCatchUp,
-    lpT1, gpT1,
-    lpT2, gpT2,
+    lpROC: state.lpROC, gpROC: state.gpROC,
+    lpPref: state.lpPref, gpCatchUp: state.gpCatchUp,
+    lpT1: state.lpT1, gpT1: state.gpT1,
+    lpT2: state.lpT2, gpT2: state.gpT2,
     lpTotal, gpTotal, gpPromote,
     lpMoM: lpCap > 0 ? lpTotal / lpCap : 0,
     gpMoM: gpCap > 0 ? gpTotal / gpCap : 0,
-    lpIRR: z(lpCap, lpTotal),
-    gpIRR: z(gpCap, gpTotal),
+    lpIRR: lpCap > 0 ? calcIRR(lpCF) * 100 : NaN,
+    gpIRR: gpCap > 0 ? calcIRR(gpCF) * 100 : NaN,
+    valid: true,
   };
 }
 
 /* ─── IRR Sensitivity grid ────────────────────────────────── */
 export function buildSens(inp, noi, capsArr, ltvsArr) {
-  const b    = inp.exitCap;
-  const caps = capsArr || [b-1.5, b-1, b-0.5, b, b+0.5, b+1];
+  const b = inp.exitCap;
+  const caps = capsArr || [b - 1.5, b - 1, b - 0.5, b, b + 0.5, b + 1];
   const ltvs = ltvsArr || [40, 50, 55, 60, 65, 70];
-  const HP   = Math.max(1, Math.round(inp.hold));
-  const IO   = Math.round(inp.ioYrs);
-  const AY   = Math.max(1, Math.round(inp.amortYrs));
+  const HP = Math.max(1, Math.round(inp.hold));
 
   const grid = caps.map(ec => ltvs.map(lv => {
-    const lo = inp.price * lv / 100;
-    const eq = inp.price * (1 + inp.acqCosts / 100) - lo;
-    if (eq <= 0) return null;
-    const ap  = pmt(lo, inp.intRate, AY);
-    const cfs = [-eq]; let bl = lo;
-
-    for (let yr = 1; yr <= HP; yr++) {
-      const yrN = noi * (1 + inp.noiGrowth / 100) ** (yr - 1);
-      const it  = bl * inp.intRate / 100;
-      const ds  = yr <= IO ? it : ap;
-      const pr  = yr <= IO ? 0 : Math.max(0, Math.min(ds - it, bl));
-      bl = Math.max(0, bl - pr);
-      let ex = 0;
-      if (yr === HP) {
-        const xn = noi * (1 + inp.noiGrowth / 100) ** HP;
-        ex = (ec > 0 ? xn / (ec / 100) : 0) * (1 - inp.exitCosts / 100) - bl;
-      }
-      cfs.push(yrN - ds + ex);
-    }
-    const irr = calcIRR(cfs) * 100;
+    const scenario = { ...inp, ltv: lv, exitCap: ec };
+    const built = buildLeveredCFs(scenario, noi);
+    if (built.equity <= 0) return null;
+    const irr = calcIRR(built.levCF) * 100;
     return isFinite(irr) ? irr : null;
   }));
 
-  return { caps, ltvs, grid };
+  return { caps, ltvs, grid, HP };
 }
 
 /* ─── IRR cell colour ─────────────────────────────────────── */
 export function irrS(v) {
   if (v == null || !isFinite(v)) return { background:"#f1f5f9", color:"#94a3b8" };
   if (v <  0) return { background:"#be123c", color:"#fff" };
+  if (v <  4) return { background:"#fecaca", color:"#7f1d1d" };
   if (v <  8) return { background:"#f87171", color:"#fff" };
   if (v < 12) return { background:"#fed7aa", color:"#7c2d12" };
   if (v < 16) return { background:"#fef9c3", color:"#713f12" };
   if (v < 20) return { background:"#d1fae5", color:"#065f46" };
   if (v < 25) return { background:"#6ee7b7", color:"#064e3b" };
   return             { background:"#059669", color:"#fff"    };
+}
+
+/* ─── URL state encoding (shareable deals) ─────────────────── */
+export function encodeAppState({ inp, wf, tab }) {
+  const payload = {
+    v: 1,
+    tab: tab || "underwriter",
+    inp: INP_KEYS.reduce((o, k) => { o[k] = inp[k]; return o; }, {}),
+    wf: WF_KEYS.reduce((o, k) => { o[k] = wf[k]; return o; }, {}),
+  };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
+
+export function decodeAppState(encoded) {
+  if (!encoded) return null;
+  try {
+    const payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (!payload || payload.v !== 1) return null;
+
+    const inp = { ...DEF };
+    INP_KEYS.forEach(k => {
+      if (payload.inp?.[k] !== undefined) inp[k] = payload.inp[k];
+    });
+    if (payload.inp?.assetClass && AC[payload.inp.assetClass]) {
+      inp.assetClass = payload.inp.assetClass;
+    }
+
+    const wf = { ...WF_DEF };
+    WF_KEYS.forEach(k => {
+      if (payload.wf?.[k] !== undefined) wf[k] = payload.wf[k];
+    });
+
+    const tab = ["underwriter", "waterfall", "memo"].includes(payload.tab)
+      ? payload.tab
+      : "underwriter";
+
+    return { inp, wf, tab };
+  } catch {
+    return null;
+  }
+}
+
+export function readStateFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return decodeAppState(params.get("d"));
+}
+
+export function writeStateToUrl({ inp, wf, tab }) {
+  const encoded = encodeAppState({ inp, wf, tab });
+  const url = new URL(window.location.href);
+  url.searchParams.set("d", encoded);
+  window.history.replaceState(null, "", url.toString());
 }
