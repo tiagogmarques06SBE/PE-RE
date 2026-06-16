@@ -4,13 +4,15 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
 import {
   F, AC, DEF, WF_DEF,
   computeModel, computeWaterfall, buildSens, irrS,
+  computeAttribution, computeSourcesUses, computeBreakeven,
+  computeScenarios, SCENARIOS,
   readStateFromUrl, writeStateToUrl,
 } from "./calculations";
 
@@ -18,6 +20,7 @@ import "../styles.css"
 
 const TABS = [
   { id: "underwriter", label: "Underwriter", icon: "📊" },
+  { id: "analysis", label: "Deal Analysis", icon: "📈" },
   { id: "waterfall", label: "Waterfall / Promote", icon: "🏦" },
   { id: "memo", label: "Memo Export", icon: "📄" },
 ];
@@ -105,6 +108,81 @@ function MCard({ label, val, sub, hi, subClass }) {
   );
 }
 
+/* ─── Sources & Uses (capital stack) ──────────────────────── */
+function SourcesUsesCard({ inp, M }) {
+  const SU = useMemo(() => computeSourcesUses(M, inp), [M, inp]);
+  const col = (rows, total, totalLabel, accent) => (
+    <div className="su-col">
+      {rows.map((r) => (
+        <div key={r.label} className="su-row">
+          <span className="su-label">{r.label}</span>
+          <span className="su-val">
+            {F.eur(r.val)}
+            {r.pct != null && <span className="su-pct"> · {r.pct.toFixed(0)}%</span>}
+          </span>
+        </div>
+      ))}
+      <div className="su-row su-total" style={{ color: accent }}>
+        <span>{totalLabel}</span>
+        <span>{F.eur(total)}</span>
+      </div>
+    </div>
+  );
+  return (
+    <div className="card">
+      <div className="card-title">Sources &amp; Uses</div>
+      <div className="su-grid">
+        <div>
+          <div className="su-head">Uses of Capital</div>
+          {col(SU.uses, SU.totalUses, "Total Uses", "#1d4ed8")}
+        </div>
+        <div>
+          <div className="su-head">Sources of Capital</div>
+          {col(SU.sources, SU.totalSources, "Total Sources", "#7c3aed")}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Value-creation waterfall (returns attribution) ──────── */
+function AttributionWaterfall({ items }) {
+  const COLORS = { pos: "#10b981", neg: "#ef4444", total: "#1d4ed8" };
+  const data = useMemo(() => {
+    let cum = 0;
+    const d = items.map((it) => {
+      const start = cum;
+      const end = cum + it.val;
+      cum = end;
+      return {
+        name: it.label,
+        base: Math.min(start, end),
+        delta: Math.abs(it.val),
+        val: it.val,
+        fill: it.val >= 0 ? COLORS.pos : COLORS.neg,
+      };
+    });
+    d.push({ name: "Equity Profit", base: 0, delta: Math.abs(cum), val: cum, fill: COLORS.total });
+    return d;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
+  return (
+    <ResponsiveContainer width="100%" height={Math.max(220, data.length * 38)}>
+      <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, left: 10, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+        <XAxis type="number" tick={{ fontSize: 9 }} tickFormatter={(v) => F.eur(v)} />
+        <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10 }} />
+        <Tooltip formatter={(v, n, p) => [F.eur(p.payload.val), "Contribution"]} contentStyle={{ fontSize: 11 }} />
+        <Bar dataKey="base" stackId="w" fill="transparent" />
+        <Bar dataKey="delta" stackId="w" radius={[0, 3, 3, 0]}>
+          {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 function ErrorBanner({ errors }) {
   if (!errors?.length) return null;
   return (
@@ -187,6 +265,25 @@ function UnderwriterPage({ inp, setInp, M }) {
           <NI id="exitCap" label="Exit Cap Rate" value={inp.exitCap} onChange={num("exitCap")} sfx="%" step="0.25" min="1" max="15" />
           <NI id="exitCosts" label="Disposal Costs" value={inp.exitCosts} onChange={num("exitCosts")} sfx="%" step="0.25" min="0" max="5" />
         </Sec>
+
+        <Sec title="Capital Expenditure">
+          <NI id="capex" label="Upfront CapEx" value={inp.capex} onChange={num("capex")} pfx="€" step="50000" min="0" />
+          <div style={{ fontSize: 9, color: "#94a3b8" }}>Added to Uses & equity. 0 = none.</div>
+        </Sec>
+
+        <Sec title="Lease-Up (optional)">
+          <NI id="leaseUpYrs" label="Lease-Up Period (years)" value={inp.leaseUpYrs} onChange={num("leaseUpYrs")} step="1" min="0" max="10" />
+          <NI id="entryVacancy" label="Vacancy at Entry" value={inp.entryVacancy} onChange={num("entryVacancy")} sfx="%" step="1" min="0" max="100" />
+          <div style={{ fontSize: 9, color: "#94a3b8" }}>NOI ramps from entry to stabilised. 0 yrs = stabilised day one.</div>
+        </Sec>
+
+        <Sec title="Refinancing (optional)">
+          <NI id="refiYr" label="Refinance in Year" value={inp.refiYr} onChange={num("refiYr")} step="1" min="0" max={inp.hold - 1} />
+          <NI id="refiLtv" label="Refi LTV" value={inp.refiLtv} onChange={num("refiLtv")} sfx="%" step="5" min="0" max="100" />
+          <NI id="refiCap" label="Refi Valuation Cap" value={inp.refiCap} onChange={num("refiCap")} sfx="%" step="0.25" min="1" max="15" />
+          <NI id="refiCosts" label="Refi Costs" value={inp.refiCosts} onChange={num("refiCosts")} sfx="%" step="0.25" min="0" max="5" />
+          <div style={{ fontSize: 9, color: "#94a3b8" }}>0 = no refinancing.</div>
+        </Sec>
       </aside>
 
       <div className="main-panel">
@@ -242,6 +339,8 @@ function UnderwriterPage({ inp, setInp, M }) {
             subClass={dscrSub?.cls} />
           <MCard label="Equity Required" val={F.eur(M.equity)} sub={`${(100 - inp.ltv).toFixed(0)}% of price + costs`} />
         </div>
+
+        {M.valid && <SourcesUsesCard inp={inp} M={M} />}
 
         <div className="card">
           <div className="card-title">Cash Flow & Debt Waterfall</div>
@@ -773,6 +872,109 @@ function MemoExportPage({ inp, M }) {
   );
 }
 
+/* ─── Page — Deal Analysis ────────────────────────────────── */
+function AnalysisPage({ inp, M }) {
+  const A = useMemo(() => computeAttribution(M, inp), [M, inp]);
+  const scenarios = useMemo(() => computeScenarios(inp), [inp]);
+  const BE = useMemo(() => computeBreakeven(inp), [inp]);
+
+  if (!M.valid) {
+    return (
+      <div className="page-layout">
+        <aside className="sidebar" />
+        <InvalidPanel message="Adjust inputs in the Underwriter tab to generate the analysis." />
+      </div>
+    );
+  }
+
+  const scColor = (s) => (!s.valid || s.noIRR ? "weak" : s.levIRR >= 15 ? "good" : s.levIRR >= 8 ? "ok" : "weak");
+  const pct = (v) => (v == null ? "—" : `${v.toFixed(2)}%`);
+
+  return (
+    <div className="analysis-page">
+      <div className="card">
+        <div className="card-title">Returns Attribution — Value Creation Bridge</div>
+        <div style={{ fontSize: 11, color: "#64748b", marginBottom: 14 }}>
+          How the <strong>{F.eur(A.profit)}</strong> of levered equity profit is generated, from operations through to exit.
+          Components reconcile exactly to total distributions less equity invested.
+        </div>
+        <AttributionWaterfall items={A.items} />
+        <div className="attr-grid">
+          {A.items.map((it) => (
+            <div key={it.key} className="attr-tile">
+              <div className="attr-label">{it.label}</div>
+              <div className="attr-val" style={{ color: it.val >= 0 ? "#059669" : "#ef4444" }}>
+                {it.val >= 0 ? "+" : "−"}{F.eur(Math.abs(it.val))}
+              </div>
+            </div>
+          ))}
+          <div className="attr-tile attr-profit">
+            <div className="attr-label">Equity Profit</div>
+            <div className="attr-val">{F.eur(A.profit)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="two-col-equal">
+        <div className="card" style={{ marginBottom: 0 }}>
+          <div className="card-title">Scenario Analysis</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginBottom: 14 }}>
+            Bear / Base / Bull cases flex exit cap, NOI growth and vacancy together.
+          </div>
+          <div className="scenario-grid">
+            {scenarios.map((s) => (
+              <div key={s.key} className={`scenario-card ${scColor(s)}`}>
+                <div className="scenario-name">{s.label}</div>
+                <div className="scenario-irr">{s.noIRR ? "N/M" : F.pct(s.levIRR)}</div>
+                <div className="scenario-sub">{F.mul(s.mom)} MoM</div>
+              </div>
+            ))}
+          </div>
+          <div className="scenario-legend">
+            <span>Bear: +{SCENARIOS.bear.dCap}% cap · {SCENARIOS.bear.dGrowth}% growth · +{SCENARIOS.bear.dVac}% vac</span>
+            <span>Bull: {SCENARIOS.bull.dCap}% cap · +{SCENARIOS.bull.dGrowth}% growth · {SCENARIOS.bull.dVac}% vac</span>
+          </div>
+        </div>
+
+        <div className="card" style={{ marginBottom: 0 }}>
+          <div className="card-title">Break-Even — What Kills the Deal</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginBottom: 14 }}>
+            The thresholds at which the deal stops working. Current exit cap: <strong>{F.pct(inp.exitCap)}</strong>.
+          </div>
+          <div className="be-grid">
+            <div className="be-tile">
+              <div className="be-label">Exit cap for {BE.target}% IRR</div>
+              <div className="be-val">{pct(BE.capAtTarget)}</div>
+            </div>
+            <div className="be-tile">
+              <div className="be-label">Exit cap for {BE.hurdle}% hurdle</div>
+              <div className="be-val">{pct(BE.capAtHurdle)}</div>
+            </div>
+            <div className="be-tile">
+              <div className="be-label">Break-even exit cap (0% IRR)</div>
+              <div className="be-val">{pct(BE.capAtZero)}</div>
+            </div>
+            <div className="be-tile">
+              <div className="be-label">Max price for {BE.target}% IRR</div>
+              <div className="be-val">{F.eur(BE.maxPriceTarget)}</div>
+            </div>
+            <div className="be-tile">
+              <div className="be-label">Break-even occupancy (DSCR 1.0×)</div>
+              <div className="be-val">{BE.breakevenVacancy == null ? "—" : `${(100 - BE.breakevenVacancy).toFixed(0)}%`}</div>
+            </div>
+            <div className="be-tile">
+              <div className="be-label">Exit cap cushion</div>
+              <div className="be-val">
+                {BE.capAtHurdle == null ? "—" : `${(BE.capAtHurdle - inp.exitCap).toFixed(2)}%`}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── App root ────────────────────────────────────────────── */
 function initState() {
   const fromUrl = readStateFromUrl();
@@ -872,6 +1074,7 @@ export default function App() {
 
       <main className="page-content">
         {tab === "underwriter" && <UnderwriterPage inp={inp} setInp={setInp} M={M} />}
+        {tab === "analysis" && <AnalysisPage inp={inp} M={M} />}
         {tab === "waterfall" && <WaterfallPage inp={inp} M={M} wf={wf} setWf={setWf} />}
         {tab === "memo" && <MemoExportPage inp={inp} M={M} />}
       </main>
