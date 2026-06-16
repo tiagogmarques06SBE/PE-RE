@@ -553,6 +553,56 @@ export function computeBreakeven(i) {
   };
 }
 
+/* ─── Single-variable sensitivity (tornado) ───────────────────
+   Flexes one driver at a time and measures the swing in levered IRR
+   versus the base case. Reuses the verified cash-flow builder so the
+   underlying maths is identical to the main model. ──────────────── */
+export function computeTornado(i) {
+  const irrFor = (override) => {
+    const b = buildLeveredCFs({ ...i, ...override });
+    if (!b || b.equity <= 0) return NaN;
+    const v = calcIRR(b.levCF) * 100;
+    return isFinite(v) ? v : NaN;
+  };
+
+  const base = irrFor({});
+  if (!isFinite(base)) return { valid: false, base: NaN, items: [] };
+
+  const drivers = [
+    { key: "exitCap",  label: "Exit Cap Rate",  fmt: (v) => `${v}%`,  lo: { exitCap: i.exitCap + 0.75 }, hi: { exitCap: Math.max(0.5, i.exitCap - 0.75) }, loLbl: `+0.75%`, hiLbl: `−0.75%` },
+    { key: "noiGrowth", label: "NOI Growth",     fmt: (v) => `${v}%`, lo: { noiGrowth: i.noiGrowth - 1.5 }, hi: { noiGrowth: i.noiGrowth + 1.5 }, loLbl: `−1.5%`, hiLbl: `+1.5%` },
+    { key: "intRate",  label: "Interest Rate",  fmt: (v) => `${v}%`,  lo: { intRate: i.intRate + 1 }, hi: { intRate: Math.max(0, i.intRate - 1) }, loLbl: `+1.0%`, hiLbl: `−1.0%` },
+    { key: "vacancy",  label: "Vacancy",        fmt: (v) => `${v}%`,  lo: { vacancy: Math.min(100, i.vacancy + 5) }, hi: { vacancy: Math.max(0, i.vacancy - 5) }, loLbl: `+5%`, hiLbl: `−5%` },
+    { key: "ltv",      label: "Leverage (LTV)", fmt: (v) => `${v}%`,  lo: { ltv: Math.max(0, i.ltv - 10) }, hi: { ltv: Math.min(95, i.ltv + 10) }, loLbl: `−10%`, hiLbl: `+10%` },
+    { key: "price",    label: "Purchase Price", fmt: (v) => v,        lo: { price: i.price * 1.05 }, hi: { price: i.price * 0.95 }, loLbl: `+5%`, hiLbl: `−5%` },
+  ];
+
+  const items = drivers.map((d) => {
+    const a = irrFor(d.lo);
+    const b = irrFor(d.hi);
+    const low = Math.min(a, b);
+    const high = Math.max(a, b);
+    return {
+      key: d.key,
+      label: d.label,
+      low: isFinite(low) ? low : base,
+      high: isFinite(high) ? high : base,
+      downside: base - (isFinite(low) ? low : base),
+      upside: (isFinite(high) ? high : base) - base,
+      swing: (isFinite(high) ? high : base) - (isFinite(low) ? low : base),
+      loLbl: d.loLbl,
+      hiLbl: d.hiLbl,
+    };
+  });
+
+  items.sort((x, y) => y.swing - x.swing);
+  const maxMag = Math.max(
+    0.01,
+    ...items.map((it) => Math.max(Math.abs(it.downside), Math.abs(it.upside)))
+  );
+  return { valid: true, base, items, maxMag };
+}
+
 /* ─── Scenario analysis (Bear / Base / Bull) ──────────────── */
 export const SCENARIOS = {
   bear: { label: "Bear", dCap: 0.75, dGrowth: -1.5, dVac: 4 },

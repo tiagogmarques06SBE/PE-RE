@@ -12,7 +12,7 @@ import {
   F, AC, DEF, WF_DEF,
   computeModel, computeWaterfall, buildSens, irrS,
   computeAttribution, computeSourcesUses, computeBreakeven,
-  computeScenarios, SCENARIOS,
+  computeScenarios, SCENARIOS, computeTornado,
   readStateFromUrl, writeStateToUrl,
 } from "./calculations";
 
@@ -183,6 +183,82 @@ function AttributionWaterfall({ items }) {
   );
 }
 
+/* ─── Tornado: which single variable swings IRR the most ──── */
+function TornadoChart({ data }) {
+  if (!data.valid) return null;
+  const half = 48; // % width available on each side of the base line
+  return (
+    <div className="tornado">
+      <div className="tornado-axis">
+        <span className="tornado-axis-end">Lower IRR</span>
+        <span className="tornado-axis-mid">Base {F.pct(data.base)}</span>
+        <span className="tornado-axis-end">Higher IRR</span>
+      </div>
+      {data.items.map((it) => {
+        const downW = (Math.abs(it.downside) / data.maxMag) * half;
+        const upW = (Math.abs(it.upside) / data.maxMag) * half;
+        return (
+          <div key={it.key} className="tornado-row">
+            <div className="tornado-name">{it.label}</div>
+            <div className="tornado-track">
+              <div className="tornado-center" />
+              <div className="tornado-bar down" style={{ width: `${downW}%`, left: `calc(50% - ${downW}%)` }} title={`${F.pct(it.low)} (${it.loLbl})`} />
+              <div className="tornado-bar up" style={{ width: `${upW}%`, left: "50%" }} title={`${F.pct(it.high)} (${it.hiLbl})`} />
+            </div>
+            <div className="tornado-range">{F.pct(it.low)} → {F.pct(it.high)}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── Export the full cash-flow schedule to a spreadsheet ──── */
+function exportSchedule(inp, M) {
+  const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
+  const r0 = (n) => (isFinite(n) ? Math.round(n) : "");
+  const r2 = (n) => (isFinite(n) ? (+n).toFixed(2) : "");
+  const lines = [];
+
+  lines.push([q(inp.dealName || "Untitled Deal"), q(AC[inp.assetClass]?.name || "")].join(","));
+  lines.push("");
+  lines.push(["Metric", "Value"].map(q).join(","));
+  const summary = [
+    ["Purchase Price", r0(inp.price)],
+    ["Equity Required", r0(M.equity)],
+    ["Senior Debt", r0(M.loan)],
+    ["Entry Cap Rate (%)", r2(M.capIn)],
+    ["Levered IRR (%)", M.noIRR ? "N/M" : r2(M.levIRR)],
+    ["Unlevered IRR (%)", r2(M.unlevIRR)],
+    ["Equity Multiple (x)", r2(M.mom)],
+    ["DSCR Year 1 (x)", r2(M.dscr1)],
+  ];
+  summary.forEach((row) => lines.push(row.map(q).join(",")));
+  lines.push("");
+
+  const head = ["Year", "NOI", "Interest", "Principal", "Debt Service", "CFADS", "DSCR", "Loan Balance", "Cash-Out (Refi)", "Exit Equity"];
+  lines.push(head.map(q).join(","));
+  lines.push(["0 (Acquisition)", "", "", "", "", -r0(M.equity), "", r0(M.loan), "", ""].map(q).join(","));
+  M.rows.forEach((d) => {
+    lines.push([
+      d.yr, r0(d.yrNOI), r0(d.int), r0(d.prin), r0(d.ds),
+      r0(d.cfads), r2(d.dscr), r0(d.bal), r0(d.cashOut), r0(d.exitEq),
+    ].map(q).join(","));
+  });
+
+  const csv = "﻿" + lines.join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safe = (inp.dealName || "deal").replace(/[^a-z0-9]+/gi, "_").toLowerCase();
+  a.href = url;
+  a.download = `${safe}_cashflow.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function ErrorBanner({ errors }) {
   if (!errors?.length) return null;
   return (
@@ -343,7 +419,12 @@ function UnderwriterPage({ inp, setInp, M }) {
         {M.valid && <SourcesUsesCard inp={inp} M={M} />}
 
         <div className="card">
-          <div className="card-title">Cash Flow & Debt Waterfall</div>
+          <div className="card-head">
+            <div className="card-title" style={{ marginBottom: 0 }}>Cash Flow &amp; Debt Schedule</div>
+            <button type="button" className="btn btn-export" onClick={() => exportSchedule(inp, M)} disabled={!M.valid}>
+              ↓ Export to Excel
+            </button>
+          </div>
           <div className="table-scroll">
             <table className="data-table">
               <thead>
@@ -668,7 +749,7 @@ function WaterfallPage({ inp, M, wf, setWf }) {
             </div>
 
             <div style={{ marginTop: 14, background: "#f8fafc", borderRadius: 8, padding: "10px 12px" }}>
-              <div className="sec-title">Why this matters</div>
+              <div className="sec-title">Sponsor economics</div>
               <div style={{ fontSize: 10, color: "#475569", lineHeight: 1.6 }}>
                 The GP invested <strong>{F.pct(wf.gpPct)}</strong> of equity but earns{" "}
                 <strong>
@@ -723,8 +804,11 @@ function MemoExportPage({ inp, M }) {
         {inp.preparedBy && (
           <div style={{ color: "#94a3b8", fontSize: 11 }}>Prepared by: {inp.preparedBy}</div>
         )}
+        <button type="button" className="btn btn-export" onClick={() => exportSchedule(inp, M)} disabled={!M.valid} aria-label="Export cash flow to Excel">
+          ↓ Export to Excel
+        </button>
         <button type="button" className="btn btn-primary" onClick={() => window.print()} aria-label="Print or save as PDF">
-          Print / Save PDF
+          Save as PDF
         </button>
       </div>
 
@@ -877,6 +961,7 @@ function AnalysisPage({ inp, M }) {
   const A = useMemo(() => computeAttribution(M, inp), [M, inp]);
   const scenarios = useMemo(() => computeScenarios(inp), [inp]);
   const BE = useMemo(() => computeBreakeven(inp), [inp]);
+  const tornado = useMemo(() => computeTornado(inp), [inp]);
 
   if (!M.valid) {
     return (
@@ -893,10 +978,10 @@ function AnalysisPage({ inp, M }) {
   return (
     <div className="analysis-page">
       <div className="card">
-        <div className="card-title">Returns Attribution — Value Creation Bridge</div>
-        <div style={{ fontSize: 11, color: "#64748b", marginBottom: 14 }}>
-          How the <strong>{F.eur(A.profit)}</strong> of levered equity profit is generated, from operations through to exit.
-          Components reconcile exactly to total distributions less equity invested.
+        <div className="card-title">Value Creation Bridge</div>
+        <div className="card-sub">
+          Where the <strong>{F.eur(A.profit)}</strong> of equity profit comes from. Each driver adds up
+          to total distributions less the equity invested.
         </div>
         <AttributionWaterfall items={A.items} />
         <div className="attr-grid">
@@ -915,11 +1000,20 @@ function AnalysisPage({ inp, M }) {
         </div>
       </div>
 
+      <div className="card">
+        <div className="card-title">IRR Sensitivity — Tornado</div>
+        <div className="card-sub">
+          Each driver moved on its own, holding everything else fixed. The widest bars are the
+          assumptions the return depends on most.
+        </div>
+        <TornadoChart data={tornado} />
+      </div>
+
       <div className="two-col-equal">
         <div className="card" style={{ marginBottom: 0 }}>
           <div className="card-title">Scenario Analysis</div>
-          <div style={{ fontSize: 11, color: "#64748b", marginBottom: 14 }}>
-            Bear / Base / Bull cases flex exit cap, NOI growth and vacancy together.
+          <div className="card-sub">
+            Exit cap, NOI growth and vacancy moved together across a downside, base and upside case.
           </div>
           <div className="scenario-grid">
             {scenarios.map((s) => (
@@ -937,9 +1031,9 @@ function AnalysisPage({ inp, M }) {
         </div>
 
         <div className="card" style={{ marginBottom: 0 }}>
-          <div className="card-title">Break-Even — What Kills the Deal</div>
-          <div style={{ fontSize: 11, color: "#64748b", marginBottom: 14 }}>
-            The thresholds at which the deal stops working. Current exit cap: <strong>{F.pct(inp.exitCap)}</strong>.
+          <div className="card-title">Break-Even Thresholds</div>
+          <div className="card-sub">
+            The points where the deal stops working. Current exit cap: <strong>{F.pct(inp.exitCap)}</strong>.
           </div>
           <div className="be-grid">
             <div className="be-tile">
