@@ -8,7 +8,7 @@ export const AC = {
 };
 
 export const DEF = {
-  dealName: "Porto Office – Value Add",
+  dealName: "Lisbon Office – Value Add",
   assetClass: "office",
   grossRev: 700000,
   vacancy: 8,
