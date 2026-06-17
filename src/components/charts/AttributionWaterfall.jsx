@@ -27,11 +27,11 @@ export default function AttributionWaterfall({ items, dark }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
-  const tk = dark ? "#8b948a" : "#6b766f";
-  const gk = dark ? "#2c322a" : "#e0dccf";
+  const tk = dark ? "#94a3b8" : "#64748b";
+  const gk = dark ? "#334155" : "#e2e8f0";
   const tt = dark
-    ? { background: "#21261f", border: "1px solid #2c322a", color: "#ece9df", fontSize: 11 }
-    : { background: "#fbf9f4", border: "1px solid #e0dccf", color: "#1b2a24", fontSize: 11 };
+    ? { background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9", fontSize: 11 }
+    : { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 11 };
 
   return (
     <ResponsiveContainer width="100%" height={Math.max(220, data.length * 38)}>

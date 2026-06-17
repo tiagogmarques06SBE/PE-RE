@@ -1,42 +1,42 @@
 /* ============================================================
    Praça — Iberian Real Estate Underwriting
-   Visual identity: the investment-committee folder.
-   Stone paper · bottle-green folder · brass keyline · mono figures.
+   Visual identity: the deal room.
+   Clean slate · midnight navy · sky keyline · mono figures.
    ============================================================ */
 
-/* ─── Design tokens (light / "paper") ─────────────────────── */
+/* ─── Design tokens (light) ───────────────────────────────── */
 :root {
-  --paper:        #f3f1ea;   /* warm stone canvas              */
-  --surface:      #fbf9f4;   /* cards, a shade above canvas    */
-  --surface-2:    #efece2;   /* inset rows, sunk panels        */
-  --line:         #e0dccf;   /* hairline rules (warm)          */
-  --line-soft:    #e9e5da;
+  --paper:        #f8fafc;   /* slate-50, clean cool canvas    */
+  --surface:      #ffffff;   /* pure white cards               */
+  --surface-2:    #f1f5f9;   /* slate-100, inset rows          */
+  --line:         #e2e8f0;   /* slate-200, borders             */
+  --line-soft:    #f1f5f9;   /* slate-100, softer dividers     */
 
-  --ink:          #1b2a24;   /* charcoal-green, primary text   */
-  --ink-2:        #41504a;
-  --muted:        #6b766f;
-  --muted-2:      #98a097;
+  --ink:          #0f172a;   /* slate-900, deep                */
+  --ink-2:        #334155;   /* slate-700                      */
+  --muted:        #64748b;   /* slate-500                      */
+  --muted-2:      #94a3b8;   /* slate-400                      */
 
-  --green:        #2e5e4e;   /* primary / positive             */
-  --green-deep:   #1c3e33;   /* the folder                     */
-  --green-soft:   #e4ece6;
-  --brass:        #9a7b43;   /* signature accent, used rarely  */
-  --brass-bright: #b4924f;
-  --oxblood:      #8c3a34;   /* risk / negative                */
-  --amber:        #9c7426;   /* caution                        */
+  --green:        #059669;   /* emerald-600, positive          */
+  --green-deep:   #0f172a;   /* slate-900, hero / nav          */
+  --green-soft:   #f0fdf4;   /* emerald-50, light bg           */
+  --brass:        #0ea5e9;   /* sky-500, signature accent      */
+  --brass-bright: #38bdf8;   /* sky-400, accent lighter        */
+  --oxblood:      #dc2626;   /* red-600, negative              */
+  --amber:        #d97706;   /* amber-600, caution             */
 
-  /* fixed colours that sit on the dark green folder */
-  --on-folder:    #ece7da;
-  --on-folder-dim:#a9b4ac;
+  /* text on dark (hero / score cards) */
+  --on-folder:    #f8fafc;   /* slate-50, light text on dark   */
+  --on-folder-dim:#94a3b8;   /* slate-400, dimmed on dark      */
 
-  --radius:       6px;
-  --radius-sm:    4px;
-  --radius-xs:    3px;
+  --radius:       8px;
+  --radius-sm:    6px;
+  --radius-xs:    4px;
 
-  --shadow-sm:    0 1px 2px rgba(27, 42, 36, 0.05);
-  --shadow:       0 1px 2px rgba(27,42,36,0.05), 0 6px 16px -10px rgba(27,42,36,0.20);
-  --shadow-folder:0 18px 40px -22px rgba(28, 62, 51, 0.7);
-  --ring:         0 0 0 3px rgba(154, 123, 67, 0.30);
+  --shadow-sm:    0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow:       0 1px 3px rgba(15,23,42,0.06), 0 8px 20px -12px rgba(15,23,42,0.14);
+  --shadow-folder:0 20px 48px -24px rgba(15, 23, 42, 0.55);
+  --ring:         0 0 0 3px rgba(14, 165, 233, 0.28);
 
   --serif: "Fraunces", Georgia, "Times New Roman", serif;
   --sans:  "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -45,32 +45,32 @@
 
 /* ─── Dark mode ("after hours") ───────────────────────────── */
 [data-theme="dark"] {
-  --paper:        #10130f;
-  --surface:      #181c16;
-  --surface-2:    #21261f;
-  --line:         #2c322a;
-  --line-soft:    #242a22;
+  --paper:        #020617;   /* slate-950 */
+  --surface:      #0f172a;   /* slate-900 */
+  --surface-2:    #1e293b;   /* slate-800 */
+  --line:         #334155;   /* slate-700 */
+  --line-soft:    #1e293b;   /* slate-800 */
 
-  --ink:          #ece9df;
-  --ink-2:        #c4c8bd;
-  --muted:        #8b948a;
-  --muted-2:      #5f675d;
+  --ink:          #f1f5f9;   /* slate-100 */
+  --ink-2:        #cbd5e1;   /* slate-300 */
+  --muted:        #94a3b8;   /* slate-400 */
+  --muted-2:      #475569;   /* slate-600 */
 
-  --green:        #6aa78d;
-  --green-deep:   #16352b;
-  --green-soft:   #1b2620;
-  --brass:        #c2a064;
-  --brass-bright: #d2b277;
-  --oxblood:      #c56a62;
-  --amber:        #cba24f;
+  --green:        #34d399;   /* emerald-400 */
+  --green-deep:   #0f172a;   /* slate-900 */
+  --green-soft:   #022c22;   /* dark emerald bg */
+  --brass:        #38bdf8;   /* sky-400 */
+  --brass-bright: #7dd3fc;   /* sky-300 */
+  --oxblood:      #f87171;   /* red-400 */
+  --amber:        #fbbf24;   /* amber-400 */
 
-  --on-folder:    #ece7da;
-  --on-folder-dim:#9aa69d;
+  --on-folder:    #f1f5f9;   /* slate-100 */
+  --on-folder-dim:#64748b;   /* slate-500 */
 
   --shadow-sm:    0 1px 2px rgba(0,0,0,0.5);
-  --shadow:       0 6px 18px -10px rgba(0,0,0,0.7);
+  --shadow:       0 6px 20px -10px rgba(0,0,0,0.7);
   --shadow-folder:0 20px 44px -22px rgba(0,0,0,0.85);
-  --ring:         0 0 0 3px rgba(194, 160, 100, 0.32);
+  --ring:         0 0 0 3px rgba(56, 189, 248, 0.32);
 }
 
 /* ─── Reset & base ────────────────────────────────────────── */
@@ -102,7 +102,7 @@ a:hover { text-decoration: underline; }
   outline-offset: 2px;
   border-radius: var(--radius-xs);
 }
-::selection { background: rgba(154, 123, 67, 0.22); }
+::selection { background: rgba(14, 165, 233, 0.20); }
 
 /* ─── App shell ───────────────────────────────────────────── */
 .app-shell { min-height: 100%; display: flex; flex-direction: column; }
@@ -378,7 +378,8 @@ a:hover { text-decoration: underline; }
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(120% 80% at 100% 0%, rgba(154,123,67,0.16), transparent 55%);
+    radial-gradient(130% 90% at 95% 0%, rgba(14,165,233,0.18), transparent 60%),
+    radial-gradient(70% 55% at 5% 105%, rgba(99,102,241,0.10), transparent 50%);
   pointer-events: none;
 }
 .hero-head {
@@ -412,9 +413,9 @@ a:hover { text-decoration: underline; }
   border: 1px solid currentColor;
   background: rgba(0,0,0,0.18);
 }
-.hero-verdict.good { color: #8fcdb1; }
-.hero-verdict.ok   { color: #d8b878; }
-.hero-verdict.weak { color: #d99a92; }
+.hero-verdict.good { color: #6ee7b7; }
+.hero-verdict.ok   { color: #fcd34d; }
+.hero-verdict.weak { color: #fca5a5; }
 
 .hero-kpis {
   position: relative;
@@ -459,7 +460,10 @@ a:hover { text-decoration: underline; }
   transition: border-color 0.15s;
 }
 .mcard:hover { border-color: var(--muted-2); }
-.mcard.hi { border-left: 3px solid var(--brass); }
+.mcard.hi {
+  border-left: 3px solid var(--brass);
+  background: color-mix(in srgb, var(--brass) 5%, var(--surface));
+}
 .mcard.hi .mcard-val { color: var(--brass); }
 .mcard-label { font-size: 12.5px; color: var(--muted); }
 .mcard-val {
@@ -527,7 +531,7 @@ a:hover { text-decoration: underline; }
   box-shadow: var(--shadow-folder);
 }
 .score-card.lp { background: var(--green-deep); border-top: 3px solid var(--brass); }
-.score-card.gp { background: #2c2a22; border-top: 3px solid var(--brass); }
+.score-card.gp { background: #1e293b; border-top: 3px solid var(--brass); }
 .score-card .num, .score-card [style*="fontSize: 20"] { font-family: var(--mono); }
 
 /* ─── Memo ────────────────────────────────────────────────── */

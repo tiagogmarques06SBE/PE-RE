@@ -17,13 +17,13 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
   const HP_r = M.HP, IO_r = M.IO;
   const num = (k) => (v) => setInp((p) => ({ ...p, [k]: v }));
 
-  const tk = dark ? "#8b948a" : "#6b766f";
-  const gk = dark ? "#2c322a" : "#e0dccf";
+  const tk = dark ? "#94a3b8" : "#64748b";
+  const gk = dark ? "#334155" : "#e2e8f0";
   const tt = dark
-    ? { background: "#21261f", border: "1px solid #2c322a", color: "#ece9df", fontSize: 10 }
-    : { background: "#fbf9f4", border: "1px solid #e0dccf", color: "#1b2a24", fontSize: 10 };
-  const exitRowBg  = dark ? "#1b2620" : "#e4ece6";
-  const totalRowBg = dark ? "#21261f" : "#efece2";
+    ? { background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9", fontSize: 10 }
+    : { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 10 };
+  const exitRowBg  = dark ? "#022c22" : "#f0fdf4";
+  const totalRowBg = dark ? "#1e293b" : "#f1f5f9";
 
   const SENS = useMemo(() => {
     const b = inp.exitCap;

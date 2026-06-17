@@ -14,14 +14,14 @@ export default function WaterfallPage({ inp, M, wf, setWf, dark }) {
   const W = useMemo(() => computeWaterfall(M, wf), [M, wf]);
   const nW = (k) => (v) => setWf((p) => ({ ...p, [k]: v }));
 
-  const tk = dark ? "#8b948a" : "#6b766f";
-  const gk = dark ? "#2c322a" : "#e0dccf";
+  const tk = dark ? "#94a3b8" : "#64748b";
+  const gk = dark ? "#334155" : "#e2e8f0";
   const tt = dark
-    ? { background: "#21261f", border: "1px solid #2c322a", color: "#ece9df", fontSize: 10 }
-    : { background: "#fbf9f4", border: "1px solid #e0dccf", color: "#1b2a24", fontSize: 10 };
-  const totalRowBg = dark ? "#21261f" : "#efece2";
-  const tblHeadBg  = dark ? "#21261f" : "#efece2";
-  const infoBoxBg  = dark ? "#21261f" : "#efece2";
+    ? { background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9", fontSize: 10 }
+    : { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 10 };
+  const totalRowBg = dark ? "#1e293b" : "#f1f5f9";
+  const tblHeadBg  = dark ? "#1e293b" : "#f1f5f9";
+  const infoBoxBg  = dark ? "#1e293b" : "#f1f5f9";
 
   const TIER_COLOURS = [PAL.greenDeep, PAL.green, PAL.brass, PAL.sage, PAL.slate];
 
@@ -89,7 +89,7 @@ export default function WaterfallPage({ inp, M, wf, setWf, dark }) {
             </button>
           </div>
           {wf.catchUp && (
-            <div style={{ fontSize: 9, color: "#64748b", background: "#f8fafc", borderRadius: 6, padding: "6px 8px", marginBottom: 8, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 9, color: "#64748b", background: "#f1f5f9", borderRadius: 6, padding: "6px 8px", marginBottom: 8, lineHeight: 1.5 }}>
               GP receives 100% of proceeds until its promote share is whole, before the Tier 1 split begins.
             </div>
           )}
