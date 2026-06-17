@@ -19,16 +19,28 @@ import {
 import "../styles.css"
 
 const TABS = [
-  { id: "underwriter", label: "Underwriter", icon: "📊" },
-  { id: "analysis", label: "Deal Analysis", icon: "📈" },
-  { id: "waterfall", label: "Waterfall / Promote", icon: "🏦" },
-  { id: "memo", label: "Memo Export", icon: "📄" },
+  { id: "underwriter", label: "Underwriting" },
+  { id: "analysis", label: "Analysis" },
+  { id: "waterfall", label: "Waterfall" },
+  { id: "memo", label: "IC Memo" },
 ];
 
 const BRAND = {
+  product: "Praça",
   name: "Tiago Marques",
   url: "https://peretiago.netlify.app",
   tagline: "Built by Tiago Marques · Nova SBE",
+};
+
+/* Brand palette — kept in sync with styles.css tokens for charts. */
+const PAL = {
+  green: "#2e5e4e",
+  greenDeep: "#1c3e33",
+  brass: "#9a7b43",
+  oxblood: "#8c3a34",
+  slate: "#3d5165",
+  sage: "#7a9c8b",
+  ink: "#1b2a24",
 };
 
 /* ─── Shared UI ───────────────────────────────────────────── */
@@ -134,11 +146,11 @@ function SourcesUsesCard({ inp, M }) {
       <div className="su-grid">
         <div>
           <div className="su-head">Uses of Capital</div>
-          {col(SU.uses, SU.totalUses, "Total Uses", "#1d4ed8")}
+          {col(SU.uses, SU.totalUses, "Total Uses", PAL.green)}
         </div>
         <div>
           <div className="su-head">Sources of Capital</div>
-          {col(SU.sources, SU.totalSources, "Total Sources", "#7c3aed")}
+          {col(SU.sources, SU.totalSources, "Total Sources", PAL.brass)}
         </div>
       </div>
     </div>
@@ -147,7 +159,7 @@ function SourcesUsesCard({ inp, M }) {
 
 /* ─── Value-creation waterfall (returns attribution) ──────── */
 function AttributionWaterfall({ items, dark }) {
-  const COLORS = { pos: "#10b981", neg: "#ef4444", total: "#1d4ed8" };
+  const COLORS = { pos: PAL.green, neg: PAL.oxblood, total: PAL.brass };
   const data = useMemo(() => {
     let cum = 0;
     const d = items.map((it) => {
@@ -167,9 +179,9 @@ function AttributionWaterfall({ items, dark }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
-  const tk = dark ? "#9ca3af" : "#64748b";
-  const gk = dark ? "#1f2937" : "#f1f5f9";
-  const tt = dark ? { background: "#1f2937", border: "1px solid #374151", color: "#f9fafb", fontSize: 11 } : { fontSize: 11 };
+  const tk = dark ? "#8b948a" : "#6b766f";
+  const gk = dark ? "#2c322a" : "#e0dccf";
+  const tt = dark ? { background: "#21261f", border: "1px solid #2c322a", color: "#ece9df", fontSize: 11 } : { background: "#fbf9f4", border: "1px solid #e0dccf", color: "#1b2a24", fontSize: 11 };
   return (
     <ResponsiveContainer width="100%" height={Math.max(220, data.length * 38)}>
       <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, left: 10, bottom: 0 }}>
@@ -241,11 +253,11 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
   const cfg = AC[inp.assetClass] || AC.office;
   const HP_r = M.HP, IO_r = M.IO;
   const num = k => v => setInp(p => ({ ...p, [k]: v }));
-  const tk = dark ? "#9ca3af" : "#64748b";
-  const gk = dark ? "#1f2937" : "#f1f5f9";
-  const tt = dark ? { background: "#1f2937", border: "1px solid #374151", color: "#f9fafb", fontSize: 10 } : { fontSize: 10 };
-  const exitRowBg = dark ? "#0d1f3d" : "#eff6ff";
-  const totalRowBg = dark ? "#1e293b" : "#f8fafc";
+  const tk = dark ? "#8b948a" : "#6b766f";
+  const gk = dark ? "#2c322a" : "#e0dccf";
+  const tt = dark ? { background: "#21261f", border: "1px solid #2c322a", color: "#ece9df", fontSize: 10 } : { background: "#fbf9f4", border: "1px solid #e0dccf", color: "#1b2a24", fontSize: 10 };
+  const exitRowBg = dark ? "#1b2620" : "#e4ece6";
+  const totalRowBg = dark ? "#21261f" : "#efece2";
 
   const SENS = useMemo(() => {
     const b = inp.exitCap;
@@ -275,9 +287,9 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
           <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>EGI: {F.eur(M.egi)}</div>
           <NI id="opexPct" label={`${cfg.opx} (% EGI)`} value={inp.opexPct} onChange={num("opexPct")} sfx="%" step="1" min="0" max="80" />
           <div className="highlight-box">
-            <div style={{ fontSize: 9, color: "#94a3b8" }}>Net Operating Income</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#1d4ed8" }}>{F.eur(M.noi)}</div>
-            <div style={{ fontSize: 9, color: "#64748b" }}>Entry Cap: <strong>{F.pct(M.capIn)}</strong></div>
+            <div style={{ fontSize: 10, color: "var(--muted)" }}>Net operating income</div>
+            <div className="num" style={{ fontSize: 18, fontWeight: 600, color: "var(--green)" }}>{F.eur(M.noi)}</div>
+            <div style={{ fontSize: 10, color: "var(--muted)" }}>Entry cap <strong>{F.pct(M.capIn)}</strong></div>
           </div>
           <NI id="noiGrowth" label="NOI Growth (p.a.)" value={inp.noiGrowth} onChange={num("noiGrowth")} sfx="%" step="0.25" min="-5" max="15" />
         </Sec>
@@ -335,8 +347,8 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
           <div className="hero-glow" aria-hidden="true" />
           <div className="hero-head">
             <div>
-              <div className="hero-eyebrow">{cfg.name} · {M.HP}-Year Hold</div>
-              <div className="hero-deal">{inp.dealName || "Untitled Deal"}</div>
+              <div className="hero-eyebrow">{cfg.name} · {M.HP}-year hold · {inp.ltv}% LTV</div>
+              <div className="hero-deal">{inp.dealName || "Untitled deal"}</div>
             </div>
             <div className={`hero-verdict ${M.valid ? (M.levIRR >= 15 ? "good" : M.levIRR >= 10 ? "ok" : "weak") : "weak"}`}>
               {M.valid
@@ -422,7 +434,7 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
                       <td style={{ textAlign: "right", color: "#64748b" }}>{F.eur(d.bal)}</td>
                       <td style={{
                         textAlign: "right", fontWeight: 600,
-                        color: d.exitEq > 0 ? "#1d4ed8" : d.exitEq < 0 ? "#ef4444" : "#cbd5e1",
+                        color: d.exitEq > 0 ? PAL.green : d.exitEq < 0 ? "#ef4444" : "#cbd5e1",
                       }}>
                         {d.exitEq !== 0 ? F.eur(d.exitEq) : "—"}
                       </td>
@@ -445,10 +457,10 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
                 <YAxis tick={{ fontSize: 9, fill: tk }} tickFormatter={v => `${(v / 1000).toFixed(0)}K`} />
                 <Tooltip formatter={v => F.eur(v)} contentStyle={tt} />
                 <Legend wrapperStyle={{ fontSize: 9, color: tk }} />
-                <Bar dataKey="NOI" fill="#3b82f6" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Debt Service" fill="#fca5a5" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="CFADS" fill="#34d399" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Exit Equity" fill="#7c3aed" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="NOI" fill={PAL.green} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Debt Service" fill={PAL.oxblood} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="CFADS" fill={PAL.brass} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Exit Equity" fill={PAL.slate} radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -457,7 +469,7 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
             <div className="card-title" style={{ fontSize: 12 }}>Levered IRR Sensitivity</div>
             <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 10 }}>
               Exit Cap (rows) × LTV (cols) ·{" "}
-              <span style={{ fontWeight: 600, color: "#1d4ed8" }}>
+              <span style={{ fontWeight: 600, color: PAL.green }}>
                 Current: {F.pct(inp.exitCap)} / {inp.ltv}% LTV
               </span>
             </div>
@@ -471,7 +483,7 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
                     {SENS.ltvs.map(l => (
                       <th key={l} style={{
                         fontSize: 10, fontWeight: 600, padding: "3px 4px", textAlign: "center",
-                        color: l === inp.ltv ? "#1d4ed8" : "#94a3b8",
+                        color: l === inp.ltv ? PAL.green : "#94a3b8",
                       }}>{l}%</th>
                     ))}
                   </tr>
@@ -481,7 +493,7 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
                     const isBase = Math.abs(ec - inp.exitCap) < 0.001;
                     return (
                       <tr key={ri}>
-                        <td style={{ padding: "2px 5px", fontSize: 10, fontWeight: isBase ? 700 : 500, color: isBase ? "#1d4ed8" : "#475569" }}>
+                        <td style={{ padding: "2px 5px", fontSize: 10, fontWeight: isBase ? 700 : 500, color: isBase ? PAL.green : "#475569" }}>
                           {ec.toFixed(2)}%
                         </td>
                         {SENS.grid[ri].map((irr, ci) => {
@@ -524,12 +536,12 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
 function WaterfallPage({ inp, M, wf, setWf, dark }) {
   const W = useMemo(() => computeWaterfall(M, wf), [M, wf]);
   const nW = k => v => setWf(p => ({ ...p, [k]: v }));
-  const tk = dark ? "#9ca3af" : "#64748b";
-  const gk = dark ? "#1f2937" : "#f1f5f9";
-  const tt = dark ? { background: "#1f2937", border: "1px solid #374151", color: "#f9fafb", fontSize: 10 } : { fontSize: 10 };
-  const totalRowBg = dark ? "#1e293b" : "#f8fafc";
-  const tblHeadBg = dark ? "#1e293b" : "#f8fafc";
-  const infoBoxBg = dark ? "#1e293b" : "#f8fafc";
+  const tk = dark ? "#8b948a" : "#6b766f";
+  const gk = dark ? "#2c322a" : "#e0dccf";
+  const tt = dark ? { background: "#21261f", border: "1px solid #2c322a", color: "#ece9df", fontSize: 10 } : { background: "#fbf9f4", border: "1px solid #e0dccf", color: "#1b2a24", fontSize: 10 };
+  const totalRowBg = dark ? "#21261f" : "#efece2";
+  const tblHeadBg = dark ? "#21261f" : "#efece2";
+  const infoBoxBg = dark ? "#21261f" : "#efece2";
 
   const chartData = useMemo(() => [
     { name: "LP", roc: W.lpROC, pref: W.lpPref, catchup: 0, t1: W.lpT1, t2: W.lpT2 },
@@ -544,7 +556,7 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
     { key: "t2", label: `Tier 2 (${wf.t2LP}% LP / ${wf.t2GP}% GP)` },
   ];
 
-  const TIER_COLOURS = ["#1d4ed8", "#3b82f6", "#7c3aed", "#06b6d4", "#10b981"];
+  const TIER_COLOURS = [PAL.greenDeep, PAL.green, PAL.brass, PAL.sage, PAL.slate];
 
   const tierRows = [
     { label: "Return of Capital", lp: W.lpROC, gp: W.gpROC, lpPct: `${wf.lpPct}%`, gpPct: `${wf.gpPct}%` },
@@ -565,10 +577,10 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
     <div className="page-layout">
       <aside className="sidebar">
         <div className="highlight-box" style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 4 }}>Total equity pool</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#1d4ed8" }}>{F.eur(M.totalDist)}</div>
-          <div style={{ fontSize: 9, color: "#64748b", marginTop: 2 }}>
-            All distributions to equity · Deal MoM: {F.mul(M.mom)}
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 4 }}>Total equity distributions</div>
+          <div className="num" style={{ fontSize: 20, fontWeight: 600, color: "var(--green)" }}>{F.eur(M.totalDist)}</div>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>
+            Across the hold · deal MoM {F.mul(M.mom)}
           </div>
         </div>
 
@@ -590,7 +602,7 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
             <span style={{ fontSize: 10, color: "#475569" }}>GP Catch-Up</span>
             <button type="button" className="btn" aria-pressed={wf.catchUp}
               onClick={() => setWf(p => ({ ...p, catchUp: !p.catchUp }))}
-              style={{ background: wf.catchUp ? "#1d4ed8" : "#e2e8f0", color: wf.catchUp ? "#fff" : "#94a3b8", border: "none", borderRadius: 12, padding: "3px 12px", fontWeight: 600 }}>
+              style={{ background: wf.catchUp ? PAL.green : "#e2e8f0", color: wf.catchUp ? "#fff" : "#94a3b8", border: "none", borderRadius: 12, padding: "3px 12px", fontWeight: 600 }}>
               {wf.catchUp ? "ON" : "OFF"}
             </button>
           </div>
@@ -633,7 +645,7 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
                 ["IRR", F.pct(W.lpIRR)], ["MoM", F.mul(W.lpMoM)]].map(([l, v]) => (
                 <div key={l}>
                   <div style={{ fontSize: 10, opacity: 0.7 }}>{l}</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, marginTop: 2 }}>{v}</div>
+                  <div className="num" style={{ fontSize: 21, fontWeight: 500, marginTop: 3 }}>{v}</div>
                 </div>
               ))}
             </div>
@@ -645,13 +657,13 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
                 ["IRR", F.pct(W.gpIRR)], ["MoM", F.mul(W.gpMoM)]].map(([l, v]) => (
                 <div key={l}>
                   <div style={{ fontSize: 10, opacity: 0.7 }}>{l}</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, marginTop: 2 }}>{v}</div>
+                  <div className="num" style={{ fontSize: 21, fontWeight: 500, marginTop: 3 }}>{v}</div>
                 </div>
               ))}
             </div>
             <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid #ffffff25" }}>
               <span style={{ fontSize: 10, opacity: 0.7 }}>Promote earned: </span>
-              <span style={{ fontSize: 16, fontWeight: 700 }}>{F.eur(W.gpPromote)}</span>
+              <span className="num" style={{ fontSize: 17, fontWeight: 500 }}>{F.eur(W.gpPromote)}</span>
             </div>
           </div>
         </div>
@@ -690,16 +702,16 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
                   {tierRows.map((r, i) => (
                     <tr key={i} style={{ borderTop: "1px solid #f8fafc" }}>
                       <td style={{ fontSize: 10, color: "#475569" }}>{r.label}</td>
-                      <td style={{ textAlign: "right", fontWeight: 600, color: "#1d4ed8" }}>{r.lp > 0 ? F.eur(r.lp) : "—"}</td>
-                      <td style={{ textAlign: "right", fontWeight: 600, color: "#7c3aed" }}>{r.gp > 0 ? F.eur(r.gp) : "—"}</td>
+                      <td style={{ textAlign: "right", fontWeight: 600, color: PAL.green }}>{r.lp > 0 ? F.eur(r.lp) : "—"}</td>
+                      <td style={{ textAlign: "right", fontWeight: 600, color: PAL.brass }}>{r.gp > 0 ? F.eur(r.gp) : "—"}</td>
                       <td style={{ textAlign: "right", color: "#64748b" }}>{r.lpPct}</td>
                       <td style={{ textAlign: "right", color: "#64748b" }}>{r.gpPct}</td>
                     </tr>
                   ))}
                   <tr style={{ borderTop: "2px solid #e2e8f0", background: totalRowBg }}>
                     <td style={{ fontWeight: 700 }}>Total</td>
-                    <td style={{ textAlign: "right", fontWeight: 700, color: "#1d4ed8", fontSize: 12 }}>{F.eur(W.lpTotal)}</td>
-                    <td style={{ textAlign: "right", fontWeight: 700, color: "#7c3aed", fontSize: 12 }}>{F.eur(W.gpTotal)}</td>
+                    <td style={{ textAlign: "right", fontWeight: 700, color: PAL.green, fontSize: 12 }}>{F.eur(W.lpTotal)}</td>
+                    <td style={{ textAlign: "right", fontWeight: 700, color: PAL.brass, fontSize: 12 }}>{F.eur(W.gpTotal)}</td>
                     <td style={{ textAlign: "right", fontWeight: 600, color: "#475569" }}>
                       {W.lpTotal > 0 ? `${(W.lpTotal / (W.lpTotal + W.gpTotal) * 100).toFixed(0)}%` : "—"}
                     </td>
@@ -753,7 +765,7 @@ function MemoExportPage({ inp, M, dark }) {
   const docText = dark ? "#d1d5db" : "#334155";
   const docMuted = dark ? "#6b7280" : "#94a3b8";
   const ms = {
-    hdr: { background: "#0a0f1a", padding: "28px 36px", color: "#fff" },
+    hdr: { background: "#1c3e33", padding: "30px 36px", color: "#ece7da", borderTop: "3px solid #9a7b43" },
     sec: { padding: "18px 36px", borderBottom: `1px solid ${docBorder}` },
     secH: { fontSize: 11, fontWeight: 700, color: dark ? "#9ca3af" : "#475569", marginBottom: 10, fontFamily: "sans-serif" },
     body: { fontSize: 11, color: docText, lineHeight: 1.6, fontFamily: "sans-serif" },
@@ -764,11 +776,11 @@ function MemoExportPage({ inp, M, dark }) {
     <div className="memo-page">
       <div className="memo-control-bar no-print">
         <div>
-          <div style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600 }}>Investment Memo</div>
+          <div style={{ color: "#ece7da", fontSize: 14, fontWeight: 600, fontFamily: "Fraunces, serif" }}>Investment committee memo</div>
         </div>
         <div style={{ flex: 1 }} />
         {inp.preparedBy && (
-          <div style={{ color: "#94a3b8", fontSize: 11 }}>Prepared by: {inp.preparedBy}</div>
+          <div style={{ color: "#a9b4ac", fontSize: 11 }}>Prepared by {inp.preparedBy}</div>
         )}
         <button type="button" className="btn btn-primary" onClick={() => window.print()} aria-label="Print or save as PDF">
           Save as PDF
@@ -778,11 +790,11 @@ function MemoExportPage({ inp, M, dark }) {
       <div className="memo-preview-wrap">
         <div className="memo-doc" style={{ background: docBg, borderColor: docBorder }}>
           <div style={ms.hdr}>
-            <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4, fontFamily: "sans-serif" }}>
-              Investment Memorandum
+            <div style={{ fontSize: 11.5, color: "#b4924f", marginBottom: 6, fontFamily: "sans-serif" }}>
+              Confidential · Investment committee memorandum
             </div>
-            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.5px" }}>{inp.dealName}</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 8, fontSize: 10, color: "#94a3b8", fontFamily: "sans-serif" }}>
+            <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.015em", fontFamily: "Fraunces, serif" }}>{inp.dealName}</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 10, fontSize: 11, color: "#a9b4ac", fontFamily: "sans-serif" }}>
               <span>{assetLbl}</span>
               <span>·</span>
               <span>{today}</span>
@@ -811,7 +823,7 @@ function MemoExportPage({ inp, M, dark }) {
                     [F.pct(M.capIn), "Entry Cap Rate"],
                   ].map(([v, l]) => (
                     <div key={l} style={{ textAlign: "center", padding: "12px 6px", borderRight: `1px solid ${docBorder}`, fontFamily: "sans-serif" }}>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: dark ? "#f9fafb" : "#0f172a", letterSpacing: "-0.5px" }}>{v}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: dark ? "#ece9df" : "#1b2a24", letterSpacing: "-0.5px" }}>{v}</div>
                       <div style={{ fontSize: 9, color: docMuted, marginTop: 3 }}>{l}</div>
                     </div>
                   ))}
@@ -831,7 +843,7 @@ function MemoExportPage({ inp, M, dark }) {
                   ].map(([v, l]) => (
                     <div key={l} style={{ padding: "10px 14px", fontFamily: "sans-serif", borderRight: `1px solid ${docBorder}` }}>
                       <div style={{ fontSize: 9, color: docMuted }}>{l}</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: dark ? "#f9fafb" : "#0f172a", marginTop: 3 }}>{v}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: dark ? "#ece9df" : "#1b2a24", marginTop: 3 }}>{v}</div>
                     </div>
                   ))}
                 </div>
@@ -845,7 +857,7 @@ function MemoExportPage({ inp, M, dark }) {
                       <tr>
                         <th style={{ padding: "5px 8px", textAlign: "left", color: "#94a3b8", fontSize: 9 }}>Cap ↓ / LTV →</th>
                         {SENS.ltvs.map(l => (
-                          <th key={l} style={{ padding: "5px 8px", textAlign: "center", fontSize: 10, fontWeight: 700, color: l === inp.ltv ? "#1d4ed8" : "#475569" }}>
+                          <th key={l} style={{ padding: "5px 8px", textAlign: "center", fontSize: 10, fontWeight: 700, color: l === inp.ltv ? PAL.green : "#475569" }}>
                             {l}%
                           </th>
                         ))}
@@ -856,7 +868,7 @@ function MemoExportPage({ inp, M, dark }) {
                         const isBase = Math.abs(ec - inp.exitCap) < 0.001;
                         return (
                           <tr key={ri}>
-                            <td style={{ padding: "4px 8px", fontSize: 10, fontWeight: isBase ? 700 : 400, color: isBase ? "#1d4ed8" : "#475569" }}>
+                            <td style={{ padding: "4px 8px", fontSize: 10, fontWeight: isBase ? 700 : 400, color: isBase ? PAL.green : "#475569" }}>
                               {ec.toFixed(2)}%
                             </td>
                             {SENS.grid[ri].map((irr, ci) => {
@@ -910,7 +922,7 @@ function MemoExportPage({ inp, M, dark }) {
               based on stated assumptions and are not guaranteed. Past performance is not indicative
               of future results.
               {" · "}
-              Model by <a href={BRAND.url} style={{ color: "#1d4ed8" }}>{BRAND.name}</a>
+              Model by <a href={BRAND.url} style={{ color: PAL.green }}>{BRAND.name}</a>
             </div>
           </div>
         </div>
@@ -1083,8 +1095,8 @@ export default function App() {
     <div className="app-shell">
       <header className="top-nav no-print">
         <div className="top-nav-brand">
-          <div className="top-nav-brand-title">RE Deal Underwriter</div>
-          <div className="top-nav-brand-sub">Iberian Real Estate · Private Equity</div>
+          <div className="top-nav-brand-title">{BRAND.product}</div>
+          <div className="top-nav-brand-sub">Iberian real estate underwriting</div>
           <a className="top-nav-brand-link" href={BRAND.url} target="_blank" rel="noopener noreferrer">
             {BRAND.tagline}
           </a>
@@ -1099,7 +1111,7 @@ export default function App() {
               onClick={() => setTab(t.id)}
               aria-current={tab === t.id ? "page" : undefined}
             >
-              <span aria-hidden="true">{t.icon} </span>{t.label}
+              {t.label}
             </button>
           ))}
         </nav>
@@ -1149,7 +1161,7 @@ export default function App() {
       </main>
 
       <footer className="brand-footer no-print">
-        RE Deal Underwriter · Iberian Real Estate PE model ·{" "}
+        Praça · an Iberian real estate underwriting workbench ·{" "}
         <a href={BRAND.url} target="_blank" rel="noopener noreferrer">{BRAND.name}</a>
       </footer>
     </div>
