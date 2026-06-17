@@ -241,7 +241,7 @@ function ErrorBanner({ errors }) {
 function InvalidPanel({ message }) {
   return (
     <div className="main-panel">
-      <div className="card" style={{ color: "#64748b", fontSize: 13 }}>
+      <div className="card" style={{ color: "var(--muted)", fontSize: 13 }}>
         {message || "Adjust inputs in the sidebar to see outputs."}
       </div>
     </div>
@@ -284,7 +284,7 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
         <Sec title="Revenue & NOI">
           <NI id="grossRev" label={cfg.rev} value={inp.grossRev} onChange={num("grossRev")} pfx="€" step="5000" min="0" />
           <NI id="vacancy" label={`${cfg.vac} (%)`} value={inp.vacancy} onChange={num("vacancy")} sfx="%" step="0.5" min="0" max="50" />
-          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>EGI: {F.eur(M.egi)}</div>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>EGI: {F.eur(M.egi)}</div>
           <NI id="opexPct" label={`${cfg.opx} (% EGI)`} value={inp.opexPct} onChange={num("opexPct")} sfx="%" step="1" min="0" max="80" />
           <div className="highlight-box">
             <div style={{ fontSize: 10, color: "var(--muted)" }}>Net operating income</div>
@@ -297,12 +297,12 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
         <Sec title="Acquisition">
           <NI id="price" label="Purchase Price" value={inp.price} onChange={num("price")} pfx="€" step="100000" min="1" />
           <NI id="acqCosts" label="Acquisition Costs" value={inp.acqCosts} onChange={num("acqCosts")} sfx="%" step="0.25" min="0" max="10" />
-          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>Total outlay: {F.eur(M.totalAcq)}</div>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>Total outlay: {F.eur(M.totalAcq)}</div>
         </Sec>
 
         <Sec title="Debt Structure">
           <NI id="ltv" label="LTV" value={inp.ltv} onChange={num("ltv")} sfx="%" step="5" min="0" max="100" />
-          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>
             Loan: {F.eur(M.loan)}<br />Equity: {F.eur(M.equity)}
           </div>
           <NI id="intRate" label="Interest Rate" value={inp.intRate} onChange={num("intRate")} sfx="%" step="0.25" min="0" max="15" />
@@ -318,13 +318,13 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
 
         <Sec title="Capital Expenditure">
           <NI id="capex" label="Upfront CapEx" value={inp.capex} onChange={num("capex")} pfx="€" step="50000" min="0" />
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>Added to Uses & equity. 0 = none.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)" }}>Added to Uses & equity. 0 = none.</div>
         </Sec>
 
         <Sec title="Lease-Up (optional)">
           <NI id="leaseUpYrs" label="Lease-Up Period (years)" value={inp.leaseUpYrs} onChange={num("leaseUpYrs")} step="1" min="0" max="10" />
           <NI id="entryVacancy" label="Vacancy at Entry" value={inp.entryVacancy} onChange={num("entryVacancy")} sfx="%" step="1" min="0" max="100" />
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>NOI ramps from entry to stabilised. 0 yrs = stabilised day one.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)" }}>NOI ramps from entry to stabilised. 0 yrs = stabilised day one.</div>
         </Sec>
 
         <Sec title="Refinancing (optional)">
@@ -332,13 +332,13 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
           <NI id="refiLtv" label="Refi LTV" value={inp.refiLtv} onChange={num("refiLtv")} sfx="%" step="5" min="0" max="100" />
           <NI id="refiCap" label="Refi Valuation Cap" value={inp.refiCap} onChange={num("refiCap")} sfx="%" step="0.25" min="1" max="15" />
           <NI id="refiCosts" label="Refi Costs" value={inp.refiCosts} onChange={num("refiCosts")} sfx="%" step="0.25" min="0" max="5" />
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>0 = no refinancing.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)" }}>0 = no refinancing.</div>
         </Sec>
       </aside>
 
       <div className="main-panel">
         {!M.valid && (
-          <div className="card" style={{ marginBottom: 14, color: "#64748b", fontSize: 12 }}>
+          <div className="card" style={{ marginBottom: 14, color: "var(--muted)", fontSize: 12 }}>
             Adjust inputs to restore full metrics and charts.
           </div>
         )}
@@ -404,37 +404,37 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderTop: "1px solid #f8fafc" }}>
-                  <td style={{ fontWeight: 500, color: "#475569" }}>0 · Acquisition</td>
-                  {["—", "—", "—", "—"].map((v, i) => <td key={i} style={{ textAlign: "right", color: "#cbd5e1" }}>{v}</td>)}
-                  <td style={{ textAlign: "right", fontWeight: 600, color: "#ef4444" }}>({F.eur(M.equity)})</td>
-                  <td style={{ textAlign: "right", color: "#cbd5e1" }}>—</td>
-                  <td style={{ textAlign: "right", color: "#64748b" }}>{F.eur(M.loan)}</td>
-                  <td style={{ textAlign: "right", color: "#cbd5e1" }}>—</td>
+                <tr style={{ borderTop: "1px solid var(--line-soft)" }}>
+                  <td style={{ fontWeight: 500, color: "var(--ink-2)" }}>0 · Acquisition</td>
+                  {["—", "—", "—", "—"].map((v, i) => <td key={i} style={{ textAlign: "right", color: "var(--muted-2)" }}>{v}</td>)}
+                  <td style={{ textAlign: "right", fontWeight: 600, color: "var(--oxblood)" }}>({F.eur(M.equity)})</td>
+                  <td style={{ textAlign: "right", color: "var(--muted-2)" }}>—</td>
+                  <td style={{ textAlign: "right", color: "var(--muted)" }}>{F.eur(M.loan)}</td>
+                  <td style={{ textAlign: "right", color: "var(--muted-2)" }}>—</td>
                 </tr>
                 {M.rows.map(d => {
                   const isExit = d.yr === HP_r, isIO = d.yr <= IO_r;
                   return (
-                    <tr key={d.yr} style={{ borderTop: "1px solid #f8fafc", background: isExit ? exitRowBg : "" }}>
-                      <td style={{ fontWeight: 500, color: "#475569" }}>
+                    <tr key={d.yr} style={{ borderTop: "1px solid var(--line-soft)", background: isExit ? exitRowBg : "" }}>
+                      <td style={{ fontWeight: 500, color: "var(--ink-2)" }}>
                         {d.yr}{isIO ? " (IO)" : ""}{isExit ? " · Exit" : ""}
                       </td>
-                      <td style={{ textAlign: "right", color: "#334155" }}>{F.eur(d.yrNOI)}</td>
-                      <td style={{ textAlign: "right", color: "#f87171" }}>({F.eur(d.int)})</td>
-                      <td style={{ textAlign: "right", color: "#fca5a5" }}>({F.eur(d.prin)})</td>
-                      <td style={{ textAlign: "right", color: "#ef4444", fontWeight: 500 }}>({F.eur(d.ds)})</td>
-                      <td style={{ textAlign: "right", fontWeight: 600, color: d.cfads >= 0 ? "#059669" : "#ef4444" }}>{F.eur(d.cfads)}</td>
+                      <td style={{ textAlign: "right", color: "var(--ink-2)" }}>{F.eur(d.yrNOI)}</td>
+                      <td style={{ textAlign: "right", color: PAL.oxblood }}>({F.eur(d.int)})</td>
+                      <td style={{ textAlign: "right", color: "var(--muted)" }}>({F.eur(d.prin)})</td>
+                      <td style={{ textAlign: "right", color: PAL.oxblood, fontWeight: 500 }}>({F.eur(d.ds)})</td>
+                      <td style={{ textAlign: "right", fontWeight: 600, color: d.cfads >= 0 ? PAL.green : PAL.oxblood }}>{F.eur(d.cfads)}</td>
                       <td style={{
                         textAlign: "right",
                         fontWeight: d.dscr && d.dscr < 1.2 ? 700 : 400,
-                        color: d.dscr && d.dscr < 1.2 ? "#ef4444" : "#64748b",
+                        color: d.dscr && d.dscr < 1.2 ? PAL.oxblood : "var(--muted)",
                       }}>
                         {F.mul(d.dscr)}
                       </td>
-                      <td style={{ textAlign: "right", color: "#64748b" }}>{F.eur(d.bal)}</td>
+                      <td style={{ textAlign: "right", color: "var(--muted)" }}>{F.eur(d.bal)}</td>
                       <td style={{
                         textAlign: "right", fontWeight: 600,
-                        color: d.exitEq > 0 ? PAL.green : d.exitEq < 0 ? "#ef4444" : "#cbd5e1",
+                        color: d.exitEq > 0 ? PAL.green : d.exitEq < 0 ? PAL.oxblood : "var(--muted-2)",
                       }}>
                         {d.exitEq !== 0 ? F.eur(d.exitEq) : "—"}
                       </td>
@@ -448,8 +448,8 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
 
         <div className="two-col-grid">
           <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title" style={{ fontSize: 12 }}>Annual Cash Flows</div>
-            <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 8 }} aria-hidden="true">IO = Interest Only period</div>
+            <div className="card-title">Annual Cash Flows</div>
+            <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 8 }} aria-hidden="true">IO = Interest Only period</div>
             <ResponsiveContainer width="100%" height={185}>
               <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gk} />
@@ -466,8 +466,8 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
           </div>
 
           <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title" style={{ fontSize: 12 }}>Levered IRR Sensitivity</div>
-            <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 10 }}>
+            <div className="card-title">Levered IRR Sensitivity</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 10 }}>
               Exit Cap (rows) × LTV (cols) ·{" "}
               <span style={{ fontWeight: 600, color: PAL.green }}>
                 Current: {F.pct(inp.exitCap)} / {inp.ltv}% LTV
@@ -477,13 +477,13 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 320 }}>
                 <thead>
                   <tr>
-                    <th style={{ fontSize: 9, fontWeight: 500, color: "#94a3b8", padding: "3px 5px", textAlign: "left", width: 55 }}>
+                    <th style={{ fontSize: 9, fontWeight: 500, color: "var(--muted)", padding: "3px 5px", textAlign: "left", width: 55 }}>
                       Cap ↓ LTV →
                     </th>
                     {SENS.ltvs.map(l => (
                       <th key={l} style={{
                         fontSize: 10, fontWeight: 600, padding: "3px 4px", textAlign: "center",
-                        color: l === inp.ltv ? PAL.green : "#94a3b8",
+                        color: l === inp.ltv ? PAL.green : "var(--muted)",
                       }}>{l}%</th>
                     ))}
                   </tr>
@@ -493,7 +493,7 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
                     const isBase = Math.abs(ec - inp.exitCap) < 0.001;
                     return (
                       <tr key={ri}>
-                        <td style={{ padding: "2px 5px", fontSize: 10, fontWeight: isBase ? 700 : 500, color: isBase ? PAL.green : "#475569" }}>
+                        <td style={{ padding: "2px 5px", fontSize: 10, fontWeight: isBase ? 700 : 500, color: isBase ? PAL.green : "var(--ink-2)" }}>
                           {ec.toFixed(2)}%
                         </td>
                         {SENS.grid[ri].map((irr, ci) => {
@@ -503,7 +503,7 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
                             <td key={ci} style={{
                               padding: "2px 4px", textAlign: "center", fontSize: 10, fontWeight: 600,
                               borderRadius: 4, ...s,
-                              outline: active ? "2px solid #1d4ed8" : "none",
+                              outline: active ? `2px solid ${PAL.brass}` : "none",
                               outlineOffset: "-1px",
                             }}>
                               {irr != null ? `${irr.toFixed(1)}%` : "—"}
@@ -517,8 +517,8 @@ function UnderwriterPage({ inp, setInp, M, dark }) {
               </table>
             </div>
             <div className="legend-row">
-              {[["<0%", "#be123c"], ["0–4%", "#fecaca"], ["4–8%", "#f87171"], ["8–12%", "#fed7aa"],
-                ["12–16%", "#fef9c3"], ["16–20%", "#d1fae5"], ["20–25%", "#6ee7b7"], [">25%", "#059669"]].map(([l, bg]) => (
+              {[["<0%", "#8c3a34"], ["0–4%", "#dba09c"], ["4–8%", "#ce7a74"], ["8–12%", "#e8cfa0"],
+                ["12–16%", "#f0e6c6"], ["16–20%", "#c6ddd6"], ["20–25%", "#8abda9"], [">25%", "#2e5e4e"]].map(([l, bg]) => (
                 <div key={l} className="legend-item">
                   <div className="legend-swatch" style={{ background: bg }} aria-hidden="true" />
                   <span>{l}</span>
@@ -591,7 +591,7 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
           <NI id="gpPct" label="GP Commitment (%)" value={wf.gpPct}
             onChange={v => setWf(p => ({ ...p, gpPct: v, lpPct: +(100 - v).toFixed(1) }))}
             sfx="%" step="5" min="0" max="100" />
-          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>
             LP capital: {F.eur(W.lpCap)} · GP capital: {F.eur(W.gpCap)}
           </div>
         </Sec>
@@ -599,15 +599,15 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
         <Sec title="Preferred Return">
           <NI id="hurdle" label="Hurdle Rate (p.a.)" value={wf.hurdle} onChange={nW("hurdle")} sfx="%" step="0.5" min="0" max="20" />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontSize: 10, color: "#475569" }}>GP Catch-Up</span>
+            <span style={{ fontSize: 10, color: "var(--ink-2)" }}>GP Catch-Up</span>
             <button type="button" className="btn" aria-pressed={wf.catchUp}
               onClick={() => setWf(p => ({ ...p, catchUp: !p.catchUp }))}
-              style={{ background: wf.catchUp ? PAL.green : "#e2e8f0", color: wf.catchUp ? "#fff" : "#94a3b8", border: "none", borderRadius: 12, padding: "3px 12px", fontWeight: 600 }}>
+              style={{ background: wf.catchUp ? PAL.greenDeep : "var(--surface-2)", color: wf.catchUp ? "#ece7da" : "var(--muted)", border: "1px solid var(--line)", borderRadius: 12, padding: "3px 12px", fontWeight: 600 }}>
               {wf.catchUp ? "ON" : "OFF"}
             </button>
           </div>
           {wf.catchUp && (
-            <div style={{ fontSize: 9, color: "#64748b", background: "#f8fafc", borderRadius: 6, padding: "6px 8px", marginBottom: 8, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 9, color: "var(--muted)", background: "var(--surface-2)", borderRadius: 6, padding: "6px 8px", marginBottom: 8, lineHeight: 1.5 }}>
               GP receives 100% of proceeds until its promote share is whole, before the Tier 1 split begins.
             </div>
           )}
@@ -621,7 +621,7 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
             onChange={v => setWf(p => ({ ...p, t1GP: v, t1LP: +(100 - v).toFixed(1) }))}
             sfx="%" step="5" min="0" max="100" />
           <NI id="t2EMThreshold" label="Until LP reaches MoM ×" value={wf.t2EMThreshold} onChange={nW("t2EMThreshold")} step="0.1" min="1" max="5" />
-          <div style={{ fontSize: 9, color: "#64748b", marginBottom: 8, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 8, lineHeight: 1.4 }}>
             Hurdle measured after return of capital and preferred return only.
           </div>
         </Sec>
@@ -670,8 +670,8 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
 
         <div className="two-col-equal">
           <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title" style={{ fontSize: 12 }}>Distribution Waterfall</div>
-            <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 10 }}>LP (left) vs GP (right) — stacked by tier</div>
+            <div className="card-title">Distribution Waterfall</div>
+            <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 10 }}>LP (left) vs GP (right) — stacked by tier</div>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={chartData} margin={{ top: 0, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gk} />
@@ -688,7 +688,7 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
           </div>
 
           <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title" style={{ fontSize: 12 }}>Tier-by-Tier Breakdown</div>
+            <div className="card-title">Tier-by-Tier Breakdown</div>
             <div className="table-scroll">
               <table className="data-table" style={{ minWidth: 400 }}>
                 <thead>
@@ -700,22 +700,22 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
                 </thead>
                 <tbody>
                   {tierRows.map((r, i) => (
-                    <tr key={i} style={{ borderTop: "1px solid #f8fafc" }}>
-                      <td style={{ fontSize: 10, color: "#475569" }}>{r.label}</td>
+                    <tr key={i} style={{ borderTop: "1px solid var(--line-soft)" }}>
+                      <td style={{ fontSize: 10, color: "var(--ink-2)" }}>{r.label}</td>
                       <td style={{ textAlign: "right", fontWeight: 600, color: PAL.green }}>{r.lp > 0 ? F.eur(r.lp) : "—"}</td>
                       <td style={{ textAlign: "right", fontWeight: 600, color: PAL.brass }}>{r.gp > 0 ? F.eur(r.gp) : "—"}</td>
-                      <td style={{ textAlign: "right", color: "#64748b" }}>{r.lpPct}</td>
-                      <td style={{ textAlign: "right", color: "#64748b" }}>{r.gpPct}</td>
+                      <td style={{ textAlign: "right", color: "var(--muted)" }}>{r.lpPct}</td>
+                      <td style={{ textAlign: "right", color: "var(--muted)" }}>{r.gpPct}</td>
                     </tr>
                   ))}
-                  <tr style={{ borderTop: "2px solid #e2e8f0", background: totalRowBg }}>
+                  <tr style={{ borderTop: "2px solid var(--line)", background: totalRowBg }}>
                     <td style={{ fontWeight: 700 }}>Total</td>
                     <td style={{ textAlign: "right", fontWeight: 700, color: PAL.green, fontSize: 12 }}>{F.eur(W.lpTotal)}</td>
                     <td style={{ textAlign: "right", fontWeight: 700, color: PAL.brass, fontSize: 12 }}>{F.eur(W.gpTotal)}</td>
-                    <td style={{ textAlign: "right", fontWeight: 600, color: "#475569" }}>
+                    <td style={{ textAlign: "right", fontWeight: 600, color: "var(--ink-2)" }}>
                       {W.lpTotal > 0 ? `${(W.lpTotal / (W.lpTotal + W.gpTotal) * 100).toFixed(0)}%` : "—"}
                     </td>
-                    <td style={{ textAlign: "right", fontWeight: 600, color: "#475569" }}>
+                    <td style={{ textAlign: "right", fontWeight: 600, color: "var(--ink-2)" }}>
                       {W.gpTotal > 0 ? `${(W.gpTotal / (W.lpTotal + W.gpTotal) * 100).toFixed(0)}%` : "—"}
                     </td>
                   </tr>
@@ -725,7 +725,7 @@ function WaterfallPage({ inp, M, wf, setWf, dark }) {
 
             <div style={{ marginTop: 14, background: infoBoxBg, borderRadius: 6, padding: "10px 12px" }}>
               <div className="sec-title">Sponsor economics</div>
-              <div style={{ fontSize: 10, color: "#475569", lineHeight: 1.6 }}>
+              <div style={{ fontSize: 10, color: "var(--ink-2)", lineHeight: 1.6 }}>
                 The GP invested <strong>{F.pct(wf.gpPct)}</strong> of equity but earns{" "}
                 <strong>
                   {W.gpTotal > 0 && (W.lpTotal + W.gpTotal) > 0
@@ -760,16 +760,16 @@ function MemoExportPage({ inp, M, dark }) {
       + `${inp.ltv}% LTV financing, and ${F.mul(M.mom)} equity multiple.`
     : "Model inputs require adjustment before metrics can be generated.";
 
-  const docBg = dark ? "#111827" : "#fff";
-  const docBorder = dark ? "#1f2937" : "#e2e8f0";
-  const docText = dark ? "#d1d5db" : "#334155";
-  const docMuted = dark ? "#6b7280" : "#94a3b8";
+  const docBg = dark ? "#181c16" : "#ffffff";
+  const docBorder = dark ? "#2c322a" : "#e0dccf";
+  const docText = dark ? "#ece9df" : "#1b2a24";
+  const docMuted = dark ? "#8b948a" : "#6b766f";
   const ms = {
     hdr: { background: "#1c3e33", padding: "30px 36px", color: "#ece7da", borderTop: "3px solid #9a7b43" },
     sec: { padding: "18px 36px", borderBottom: `1px solid ${docBorder}` },
-    secH: { fontSize: 11, fontWeight: 700, color: dark ? "#9ca3af" : "#475569", marginBottom: 10, fontFamily: "sans-serif" },
+    secH: { fontSize: 11, fontWeight: 700, color: dark ? "#8b948a" : "#41504a", marginBottom: 10, fontFamily: "sans-serif", letterSpacing: "0.04em" },
     body: { fontSize: 11, color: docText, lineHeight: 1.6, fontFamily: "sans-serif" },
-    foot: { background: dark ? "#0d1520" : "#f8fafc", padding: "12px 36px", borderTop: `1px solid ${docBorder}` },
+    foot: { background: dark ? "#10130f" : "#f3f1ea", padding: "12px 36px", borderTop: `1px solid ${docBorder}` },
   };
 
   return (
@@ -804,7 +804,7 @@ function MemoExportPage({ inp, M, dark }) {
 
           <div style={ms.sec}>
             <div style={ms.secH}>Executive Summary</div>
-            <div style={{ ...ms.body, fontStyle: "italic", fontSize: 12.5, lineHeight: 1.75, color: dark ? "#d1d5db" : "#1e293b" }}>
+            <div style={{ ...ms.body, fontStyle: "italic", fontSize: 12.5, lineHeight: 1.75, color: docText }}>
               {execLine}
             </div>
           </div>
@@ -855,9 +855,9 @@ function MemoExportPage({ inp, M, dark }) {
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, fontFamily: "sans-serif", minWidth: 360 }}>
                     <thead>
                       <tr>
-                        <th style={{ padding: "5px 8px", textAlign: "left", color: "#94a3b8", fontSize: 9 }}>Cap ↓ / LTV →</th>
+                        <th style={{ padding: "5px 8px", textAlign: "left", color: docMuted, fontSize: 9 }}>Cap ↓ / LTV →</th>
                         {SENS.ltvs.map(l => (
-                          <th key={l} style={{ padding: "5px 8px", textAlign: "center", fontSize: 10, fontWeight: 700, color: l === inp.ltv ? PAL.green : "#475569" }}>
+                          <th key={l} style={{ padding: "5px 8px", textAlign: "center", fontSize: 10, fontWeight: 700, color: l === inp.ltv ? PAL.green : docText }}>
                             {l}%
                           </th>
                         ))}
@@ -868,7 +868,7 @@ function MemoExportPage({ inp, M, dark }) {
                         const isBase = Math.abs(ec - inp.exitCap) < 0.001;
                         return (
                           <tr key={ri}>
-                            <td style={{ padding: "4px 8px", fontSize: 10, fontWeight: isBase ? 700 : 400, color: isBase ? PAL.green : "#475569" }}>
+                            <td style={{ padding: "4px 8px", fontSize: 10, fontWeight: isBase ? 700 : 400, color: isBase ? PAL.green : docText }}>
                               {ec.toFixed(2)}%
                             </td>
                             {SENS.grid[ri].map((irr, ci) => {
@@ -878,7 +878,7 @@ function MemoExportPage({ inp, M, dark }) {
                                 <td key={ci} style={{
                                   padding: "4px 6px", textAlign: "center", fontSize: 10, fontWeight: 600,
                                   borderRadius: 3, ...s,
-                                  outline: active ? "2px solid #1d4ed8" : "none", outlineOffset: "-1px",
+                                  outline: active ? `2px solid ${PAL.brass}` : "none", outlineOffset: "-1px",
                                 }}>
                                   {irr != null ? `${irr.toFixed(1)}%` : "—"}
                                 </td>
@@ -905,7 +905,7 @@ function MemoExportPage({ inp, M, dark }) {
                     ["Exit Cap Rate", `${inp.exitCap}%`],
                     ["Disposal Costs", `${inp.exitCosts}%`],
                   ].map(([l, v]) => (
-                    <div key={l} style={{ background: dark ? "#1e293b" : "#f8fafc", borderRadius: 6, padding: "8px 10px" }}>
+                    <div key={l} style={{ background: dark ? "#21261f" : "#f3f1ea", borderRadius: 6, padding: "8px 10px" }}>
                       <div style={{ fontSize: 9, color: docMuted }}>{l}</div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: docText, marginTop: 2 }}>{v}</div>
                     </div>
@@ -916,7 +916,7 @@ function MemoExportPage({ inp, M, dark }) {
           )}
 
           <div style={ms.foot}>
-            <div style={{ fontSize: 9, color: "#94a3b8", lineHeight: 1.5, fontFamily: "sans-serif" }}>
+            <div style={{ fontSize: 9, color: docMuted, lineHeight: 1.5, fontFamily: "sans-serif" }}>
               <strong>Disclaimer</strong> · For illustrative purposes only. This document does not
               constitute an offer to sell or a solicitation to buy any security. All projections are
               based on stated assumptions and are not guaranteed. Past performance is not indicative
@@ -963,7 +963,7 @@ function AnalysisPage({ inp, M, dark }) {
           {A.items.map((it) => (
             <div key={it.key} className="attr-tile">
               <div className="attr-label">{it.label}</div>
-              <div className="attr-val" style={{ color: it.val >= 0 ? "#059669" : "#ef4444" }}>
+              <div className="attr-val" style={{ color: it.val >= 0 ? PAL.green : PAL.oxblood }}>
                 {it.val >= 0 ? "+" : "−"}{F.eur(Math.abs(it.val))}
               </div>
             </div>

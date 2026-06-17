@@ -70,17 +70,18 @@ export const F = {
 
 /* ─── Asset class config ──────────────────────────────────── */
 export const AC = {
-  office:      { name: "Office",                 rev: "Passing Rent",        vac: "Void Allowance",        opx: "Non-Recoverable Costs" },
-  residential: { name: "Residential / BTR",      rev: "Gross Rent Roll",     vac: "Vacancy & Bad Debt",    opx: "Operating Expenses"     },
-  hospitality: { name: "Hospitality",            rev: "Total Hotel Revenue", vac: "Mgmt & Franchise Fees", opx: "Hotel Operating Costs"  },
-  retail:      { name: "Retail / Mixed-Use",     rev: "Gross Passing Rent",  vac: "Vacancy Allowance",     opx: "Non-Recoverable OpEx"   },
-  industrial:  { name: "Industrial / Logistics", rev: "Contracted Rent",     vac: "Void Allowance",        opx: "Property Running Costs" },
-  development: { name: "Development (BTS/BTR)",  rev: "GDV / End Value",     vac: "Stabilisation Disc.",   opx: "Construction Costs"     },
+  industrial:  { name: "Industrial / Logistics", rev: "Contracted Rent",     vac: "Void Allowance",        opx: "Property Running Costs"  },
+  residential: { name: "Residential / BTR",      rev: "Gross Rent Roll",     vac: "Vacancy & Bad Debt",    opx: "Operating Expenses"      },
+  office:      { name: "Office",                 rev: "Passing Rent",        vac: "Void Allowance",        opx: "Non-Recoverable Costs"   },
+  hospitality: { name: "Hospitality",            rev: "Total Hotel Revenue", vac: "Mgmt & Franchise Fees", opx: "Hotel Operating Costs"   },
+  retail:      { name: "Retail",                 rev: "Gross Passing Rent",  vac: "Vacancy Allowance",     opx: "Non-Recoverable OpEx"    },
+  student:     { name: "Student Housing / PBSA", rev: "Gross Rent Roll",     vac: "Occupancy Discount",    opx: "Operating & Mgmt Costs"  },
+  development: { name: "Development / BTS",      rev: "GDV / End Value",     vac: "Stabilisation Disc.",   opx: "Construction Costs"      },
 };
 
 /* ─── Default input values ────────────────────────────────── */
 export const DEF = {
-  dealName: "Porto Office – Value Add",
+  dealName: "Lisbon Office – Value Add",
   assetClass: "office",
   grossRev: 700000,
   vacancy: 8,
@@ -432,17 +433,17 @@ export function buildSens(inp, noi, capsArr, ltvsArr) {
   return { caps, ltvs, grid, HP };
 }
 
-/* ─── IRR cell colour ─────────────────────────────────────── */
+/* ─── IRR cell colour (Praça palette) ────────────────────── */
 export function irrS(v) {
-  if (v == null || !isFinite(v)) return { background: "#f1f5f9", color: "#94a3b8" };
-  if (v < 0) return { background: "#be123c", color: "#fff" };
-  if (v < 4) return { background: "#fecaca", color: "#7f1d1d" };
-  if (v < 8) return { background: "#f87171", color: "#fff" };
-  if (v < 12) return { background: "#fed7aa", color: "#7c2d12" };
-  if (v < 16) return { background: "#fef9c3", color: "#713f12" };
-  if (v < 20) return { background: "#d1fae5", color: "#065f46" };
-  if (v < 25) return { background: "#6ee7b7", color: "#064e3b" };
-  return { background: "#059669", color: "#fff" };
+  if (v == null || !isFinite(v)) return { background: "#efece2", color: "#98a097" };
+  if (v < 0) return { background: "#8c3a34", color: "#f5ede9" };
+  if (v < 4) return { background: "#dba09c", color: "#4e1410" };
+  if (v < 8) return { background: "#ce7a74", color: "#fff"    };
+  if (v < 12) return { background: "#e8cfa0", color: "#5c3a0c" };
+  if (v < 16) return { background: "#f0e6c6", color: "#6b4d12" };
+  if (v < 20) return { background: "#c6ddd6", color: "#1a3c2e" };
+  if (v < 25) return { background: "#8abda9", color: "#0e2d22" };
+  return { background: "#2e5e4e", color: "#ece7da" };
 }
 
 /* ─── Sources & Uses (capital stack) ──────────────────────── */
