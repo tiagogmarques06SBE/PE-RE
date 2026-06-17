@@ -61,8 +61,7 @@ export default function App() {
     <div className="app-shell">
       <header className="top-nav no-print">
         <div className="top-nav-brand">
-          <div className="top-nav-brand-title">{BRAND.product}</div>
-          <div className="top-nav-brand-sub">Iberian real estate underwriting</div>
+          <div className="top-nav-brand-title">Real Estate Underwriting</div>
           <a className="top-nav-brand-link" href={BRAND.url} target="_blank" rel="noopener noreferrer">
             {BRAND.tagline}
           </a>
@@ -126,8 +125,8 @@ export default function App() {
       </main>
 
       <footer className="brand-footer no-print">
-        Praça · an Iberian real estate underwriting workbench ·{" "}
-        <a href={BRAND.url} target="_blank" rel="noopener noreferrer">{BRAND.name}</a>
+        Real estate underwriting ·{" "}
+        <a href={BRAND.url} target="_blank" rel="noopener noreferrer">{BRAND.tagline}</a>
       </footer>
     </div>
   );

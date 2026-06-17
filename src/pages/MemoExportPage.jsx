@@ -24,22 +24,22 @@ export default function MemoExportPage({ inp, M, dark }) {
   const docMuted  = dark ? "#6b7280" : "#94a3b8";
 
   const ms = {
-    hdr:  { background: "#1c3e33", padding: "30px 36px", color: "#ece7da", borderTop: "3px solid #9a7b43" },
+    hdr:  { background: "#0f172a", padding: "30px 36px", color: "#f8fafc", borderTop: "3px solid #0ea5e9" },
     sec:  { padding: "18px 36px", borderBottom: `1px solid ${docBorder}` },
     secH: { fontSize: 11, fontWeight: 700, color: dark ? "#9ca3af" : "#475569", marginBottom: 10, fontFamily: "sans-serif" },
     body: { fontSize: 11, color: docText, lineHeight: 1.6, fontFamily: "sans-serif" },
-    foot: { background: dark ? "#0d1520" : "#f8fafc", padding: "12px 36px", borderTop: `1px solid ${docBorder}` },
+    foot: { background: dark ? "#020617" : "#f8fafc", padding: "12px 36px", borderTop: `1px solid ${docBorder}` },
   };
 
   return (
     <div className="memo-page">
       <div className="memo-control-bar no-print">
         <div>
-          <div style={{ color: "#ece7da", fontSize: 14, fontWeight: 600, fontFamily: "Fraunces, serif" }}>Investment committee memo</div>
+          <div style={{ color: "#f8fafc", fontSize: 14, fontWeight: 600, fontFamily: "Fraunces, serif" }}>Investment committee memo</div>
         </div>
         <div style={{ flex: 1 }} />
         {inp.preparedBy && (
-          <div style={{ color: "#a9b4ac", fontSize: 11 }}>Prepared by {inp.preparedBy}</div>
+          <div style={{ color: "#94a3b8", fontSize: 11 }}>Prepared by {inp.preparedBy}</div>
         )}
         <button type="button" className="btn btn-primary" onClick={() => window.print()} aria-label="Print or save as PDF">
           Save as PDF
@@ -49,11 +49,11 @@ export default function MemoExportPage({ inp, M, dark }) {
       <div className="memo-preview-wrap">
         <div className="memo-doc" style={{ background: docBg, borderColor: docBorder }}>
           <div style={ms.hdr}>
-            <div style={{ fontSize: 11.5, color: "#b4924f", marginBottom: 6, fontFamily: "sans-serif" }}>
+            <div style={{ fontSize: 11.5, color: "#38bdf8", marginBottom: 6, fontFamily: "sans-serif" }}>
               Confidential · Investment committee memorandum
             </div>
             <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.015em", fontFamily: "Fraunces, serif" }}>{inp.dealName}</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 10, fontSize: 11, color: "#a9b4ac", fontFamily: "sans-serif" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 10, fontSize: 11, color: "#94a3b8", fontFamily: "sans-serif" }}>
               <span>{assetLbl}</span>
               <span>·</span>
               <span>{today}</span>
@@ -82,7 +82,7 @@ export default function MemoExportPage({ inp, M, dark }) {
                     [F.pct(M.capIn),      "Entry Cap Rate"],
                   ].map(([v, l]) => (
                     <div key={l} style={{ textAlign: "center", padding: "12px 6px", borderRight: `1px solid ${docBorder}`, fontFamily: "sans-serif" }}>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: dark ? "#ece9df" : "#1b2a24", letterSpacing: "-0.5px" }}>{v}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: dark ? "#f8fafc" : "#0f172a", letterSpacing: "-0.5px" }}>{v}</div>
                       <div style={{ fontSize: 9, color: docMuted, marginTop: 3 }}>{l}</div>
                     </div>
                   ))}
@@ -102,7 +102,7 @@ export default function MemoExportPage({ inp, M, dark }) {
                   ].map(([v, l]) => (
                     <div key={l} style={{ padding: "10px 14px", fontFamily: "sans-serif", borderRight: `1px solid ${docBorder}` }}>
                       <div style={{ fontSize: 9, color: docMuted }}>{l}</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: dark ? "#ece9df" : "#1b2a24", marginTop: 3 }}>{v}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: dark ? "#f8fafc" : "#0f172a", marginTop: 3 }}>{v}</div>
                     </div>
                   ))}
                 </div>
