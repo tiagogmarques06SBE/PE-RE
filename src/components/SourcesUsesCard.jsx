@@ -31,12 +31,12 @@ export default function SourcesUsesCard({ inp, M }) {
       <div className="card-title">Sources &amp; Uses</div>
       <div className="su-grid">
         <div>
-          <div className="su-head">Uses of Capital</div>
-          {col(SU.uses, SU.totalUses, "Total Uses", PAL.green)}
-        </div>
-        <div>
           <div className="su-head">Sources of Capital</div>
           {col(SU.sources, SU.totalSources, "Total Sources", PAL.brass)}
+        </div>
+        <div>
+          <div className="su-head">Uses of Capital</div>
+          {col(SU.uses, SU.totalUses, "Total Uses", PAL.green)}
         </div>
       </div>
       <div style={{ marginTop: 14 }}>

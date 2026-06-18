@@ -192,15 +192,12 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
         </div>
 
         <div className="metric-grid">
-          <MCard hi label="Levered IRR" val={F.pct(M.levIRR)} sub={`Unlevered IRR: ${F.pct(M.unlevIRR)}`} />
-          <MCard label="Equity Multiple (MoM)" val={F.mul(M.mom)} sub={`Equity: ${F.eur(M.equity)}`} />
           <MCard label="Cash-on-Cash (Year 1)" val={F.pct(M.coc)} sub="CFADS ÷ equity invested" />
           <MCard label="Entry Cap Rate" val={F.pct(M.capIn)}
             sub={`Exit cap ${F.pct(inp.exitCap)} · ${inp.exitCap > M.capIn ? "Cap expansion ↑" : "Cap compression ↓"}`} />
           <MCard label={inp.mezzOn ? "Senior DSCR — Year 1" : "DSCR — Year 1"} val={F.mul(M.dscr1)}
             sub={dscrSub ? `${dscrSub.text}${M.minDSCR != null ? ` · Min ${F.mul(M.minDSCR)} (Yr ${M.minDSCRYear})` : ""}` : "—"}
             subClass={dscrSub?.cls} />
-          <MCard label="Equity Required" val={F.eur(M.equity)} sub={`${(100 - inp.ltv).toFixed(0)}% of price + costs`} />
           <MCard label="Yield on Cost" val={M.yieldOnCost != null ? F.pct(M.yieldOnCost * 100) : "—"}
             sub={M.valueAddSpreadBps != null ? `${M.valueAddSpreadBps >= 0 ? "+" : ""}${M.valueAddSpreadBps.toFixed(0)} bps vs exit cap` : "—"} />
           <MCard label="Debt Yield" val={M.debtYield != null ? F.pct(M.debtYield * 100) : "—"}
