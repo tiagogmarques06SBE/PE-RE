@@ -75,7 +75,22 @@ function solveCrossing(fn, lo, hi, target, steps = 240) {
   return null;
 }
 
-export function computeBreakeven(i) {
+export function computeIrrByExitYear(inp) {
+  const HP = Math.max(1, Math.round(inp.hold));
+  const results = [];
+  for (let h = 1; h <= HP; h++) {
+    const built = buildLeveredCFs({ ...inp, hold: h });
+    if (!built || built.equity <= 0) continue;
+    const irr = calcIRR(built.levCF) * 100;
+    if (!isFinite(irr)) continue;
+    const totalRec = built.levCF.slice(1).reduce((a, b) => a + b, 0);
+    const mom = totalRec / built.equity;
+    results.push({ year: h, irr, mom });
+  }
+  return results;
+}
+
+export function computeBreakeven(i, wfHurdle) {
   const irrAtCap = (ec) => {
     const b = buildLeveredCFs({ ...i, exitCap: ec });
     if (!b || b.equity <= 0) return NaN;
@@ -93,7 +108,7 @@ export function computeBreakeven(i) {
     return b.rows[0]?.dscr ?? NaN;
   };
 
-  const hurdle = 8;
+  const hurdle = wfHurdle ?? 8;
   const target = i.targetIRR || 15;
 
   return {

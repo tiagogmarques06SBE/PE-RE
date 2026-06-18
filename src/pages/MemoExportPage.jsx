@@ -183,6 +183,12 @@ export default function MemoExportPage({ inp, M, dark }) {
               {" · "}
               Model by <a href={BRAND.url} style={{ color: PAL.green }}>{BRAND.name}</a>
             </div>
+            <div style={{ fontSize: 9, color: "#6b7280", lineHeight: 1.6, fontFamily: "sans-serif", marginTop: 6 }}>
+              <strong>Methodology:</strong> Exit value = forward (Yr+1) NOI ÷ exit cap rate.
+              LTV sized on purchase price; acq. costs &amp; capex equity-funded.
+              Preferred return accrues on committed capital (outstanding-capital method).
+              IO loans carry a balloon at exit. IRR solved numerically (Newton-Raphson).
+            </div>
           </div>
         </div>
       </div>

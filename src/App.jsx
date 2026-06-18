@@ -61,7 +61,8 @@ export default function App() {
     <div className="app-shell">
       <header className="top-nav no-print">
         <div className="top-nav-brand">
-          <div className="top-nav-brand-title">Real Estate Underwriting</div>
+          <div className="top-nav-brand-title">Praça</div>
+          <div style={{ fontSize: 10, color: "var(--on-folder-dim)", marginBottom: 1 }}>Real Estate Underwriting</div>
           <a className="top-nav-brand-link" href={BRAND.url} target="_blank" rel="noopener noreferrer">
             {BRAND.tagline}
           </a>
@@ -119,7 +120,7 @@ export default function App() {
 
       <main className="page-content">
         {tab === "underwriter" && <UnderwriterPage inp={inp} setInp={setInp} M={M} dark={dark} />}
-        {tab === "analysis"    && <AnalysisPage    inp={inp} M={M} dark={dark} />}
+        {tab === "analysis"    && <AnalysisPage    inp={inp} M={M} wf={wf} dark={dark} />}
         {tab === "waterfall"   && <WaterfallPage   inp={inp} M={M} wf={wf} setWf={setWf} dark={dark} />}
         {tab === "memo"        && <MemoExportPage  inp={inp} M={M} dark={dark} />}
       </main>

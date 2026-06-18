@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <!-- sky-blue accent bar -->
+  <rect x="0" y="0" width="1200" height="5" fill="#0ea5e9"/>
+  <!-- subtle grid lines -->
+  <line x1="100" y1="60" x2="100" y2="570" stroke="#1e293b" stroke-width="1"/>
+  <line x1="100" y1="560" x2="1100" y2="560" stroke="#1e293b" stroke-width="1"/>
+  <!-- wordmark -->
+  <text x="100" y="230" font-family="Georgia, 'Times New Roman', serif" font-size="108" font-weight="700" fill="#f8fafc" letter-spacing="-2">Praça</text>
+  <!-- sky accent line under wordmark -->
+  <rect x="100" y="252" width="160" height="4" fill="#0ea5e9" rx="2"/>
+  <!-- subtitle -->
+  <text x="100" y="320" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-weight="400" fill="#0ea5e9" letter-spacing="0.5">Real Estate Underwriting · IC-grade</text>
+  <!-- description -->
+  <text x="100" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#475569">Levered IRR · LP/GP Waterfall · IRR Sensitivity · IC Memo</text>
+  <!-- footer -->
+  <text x="100" y="530" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#334155">Tiago Marques · Nova SBE</text>
+  <!-- decorative bar chart illustration -->
+  <rect x="820" y="300" width="50" height="200" fill="#0f2748" rx="4"/>
+  <rect x="820" y="360" width="50" height="140" fill="#059669" opacity="0.7" rx="4"/>
+  <rect x="890" y="300" width="50" height="200" fill="#0f2748" rx="4"/>
+  <rect x="890" y="300" width="50" height="200" fill="#0ea5e9" opacity="0.5" rx="4"/>
+  <rect x="960" y="300" width="50" height="200" fill="#0f2748" rx="4"/>
+  <rect x="960" y="320" width="50" height="180" fill="#059669" opacity="0.85" rx="4"/>
+  <rect x="1030" y="300" width="50" height="200" fill="#0f2748" rx="4"/>
+  <rect x="1030" y="280" width="50" height="220" fill="#0ea5e9" opacity="0.7" rx="4"/>
+</svg>

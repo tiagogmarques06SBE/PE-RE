@@ -148,11 +148,18 @@ export function computeModel(i) {
   const built = buildLeveredCFs(i);
   const { equity, levCF, unlevCF, rows, ...rest } = built;
 
+  const yieldOnCost = rest.totalAcq > 0 ? rest.noi / rest.totalAcq : null;
+  const debtYield = rest.loan > 0 ? rest.noi / rest.loan : null;
+  const valueAddSpreadBps = yieldOnCost != null ? (yieldOnCost - i.exitCap / 100) * 10000 : null;
+
   const base = {
     ...rest,
     equity,
     rows,
     levCF,
+    yieldOnCost,
+    debtYield,
+    valueAddSpreadBps,
     levIRR: NaN,
     unlevIRR: NaN,
     mom: NaN,

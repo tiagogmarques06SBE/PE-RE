@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import AttributionWaterfall from "../components/charts/AttributionWaterfall";
 import ExitBridgeChart from "../components/charts/ExitBridgeChart";
+import IrrByExitYear from "../components/charts/IrrByExitYear";
 import TornadoChart from "../components/charts/TornadoChart";
 import InvalidPanel from "../components/ui/InvalidPanel";
 import {
@@ -9,10 +10,10 @@ import {
 } from "../lib/analysis";
 import { F } from "../lib/formatters";
 
-export default function AnalysisPage({ inp, M, dark }) {
+export default function AnalysisPage({ inp, M, wf, dark }) {
   const A        = useMemo(() => computeAttribution(M, inp), [M, inp]);
   const scenarios = useMemo(() => computeScenarios(inp), [inp]);
-  const BE       = useMemo(() => computeBreakeven(inp), [inp]);
+  const BE       = useMemo(() => computeBreakeven(inp, wf?.hurdle), [inp, wf]);
   const tornado  = useMemo(() => computeTornado(inp), [inp]);
 
   if (!M.valid) {
@@ -62,6 +63,15 @@ export default function AnalysisPage({ inp, M, dark }) {
       </div>
 
       <div className="card">
+        <div className="card-title">IRR by Exit Year</div>
+        <div className="card-sub">
+          Levered IRR if the asset were sold in each year of the hold — shows the
+          optimal exit window vs the planned {inp.hold}-year hold.
+        </div>
+        <IrrByExitYear inp={inp} dark={dark} />
+      </div>
+
+      <div className="card">
         <div className="card-title">Exit Equity Bridge</div>
         <div className="card-sub">
           How the gross sale value flows to equity investors after costs, senior repayment
@@ -102,7 +112,7 @@ export default function AnalysisPage({ inp, M, dark }) {
               <div className="be-val">{pct(BE.capAtTarget)}</div>
             </div>
             <div className="be-tile">
-              <div className="be-label">Exit cap for {BE.hurdle}% hurdle</div>
+              <div className="be-label">Exit cap for {BE.hurdle}% IRR hurdle</div>
               <div className="be-val">{pct(BE.capAtHurdle)}</div>
             </div>
             <div className="be-tile">
@@ -118,7 +128,7 @@ export default function AnalysisPage({ inp, M, dark }) {
               <div className="be-val">{BE.breakevenVacancy == null ? "—" : `${(100 - BE.breakevenVacancy).toFixed(0)}%`}</div>
             </div>
             <div className="be-tile">
-              <div className="be-label">Exit cap cushion</div>
+              <div className="be-label">Exit cap cushion vs {BE.hurdle}% hurdle</div>
               <div className="be-val">
                 {BE.capAtHurdle == null ? "—" : `${(BE.capAtHurdle - inp.exitCap).toFixed(2)}%`}
               </div>

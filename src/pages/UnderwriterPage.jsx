@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
@@ -10,12 +10,15 @@ import SourcesUsesCard from "../components/SourcesUsesCard";
 import { F } from "../lib/formatters";
 import { PAL } from "../constants";
 import { AC } from "../lib/config";
-import { buildSens, irrS } from "../lib/sensitivity";
+import { buildSens2, irrS } from "../lib/sensitivity";
 
 export default function UnderwriterPage({ inp, setInp, M, dark }) {
   const cfg = AC[inp.assetClass] || AC.office;
   const HP_r = M.HP, IO_r = M.IO;
   const num = (k) => (v) => setInp((p) => ({ ...p, [k]: v }));
+
+  const [sensCol, setSensCol] = useState("price");
+  const [methOpen, setMethOpen] = useState(false);
 
   const tk = dark ? "#94a3b8" : "#64748b";
   const gk = dark ? "#334155" : "#e2e8f0";
@@ -25,10 +28,7 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
   const exitRowBg  = dark ? "#022c22" : "#f0fdf4";
   const totalRowBg = dark ? "#1e293b" : "#f1f5f9";
 
-  const SENS = useMemo(() => {
-    const b = inp.exitCap;
-    return buildSens(inp, M.noi, [b - 1.5, b - 1, b - 0.5, b, b + 0.5, b + 1], [40, 50, 55, 60, 65, 70]);
-  }, [inp, M.noi]);
+  const SENS = useMemo(() => buildSens2(inp, M.noi, sensCol), [inp, M.noi, sensCol]);
 
   const chartData = useMemo(() => M.rows.map((d) => ({
     name: `Yr ${d.yr}${d.yr <= IO_r ? " (IO)" : ""}`,
@@ -69,7 +69,8 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
         <Sec title="Debt Structure">
           <NI id="ltv" label="LTV" value={inp.ltv} onChange={num("ltv")} sfx="%" step="5" min="0" max="100" />
           <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
-            Loan: {F.eur(M.loan)}<br />Equity: {F.eur(M.equity)}
+            Loan: {F.eur(M.loan)}<br />Equity: {F.eur(M.equity)}<br />
+            Debt yield: {M.debtYield != null ? F.pct(M.debtYield * 100) : "—"}
           </div>
           <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 6 }}>LTV sized on purchase price. Acq. costs &amp; CapEx are 100% equity-funded.</div>
           <NI id="intRate" label="Interest Rate" value={inp.intRate} onChange={num("intRate")} sfx="%" step="0.25" min="0" max="15" />
@@ -162,11 +163,11 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
               <div className="hero-eyebrow">{cfg.name} · {M.HP}-year hold · {inp.ltv}% LTV</div>
               <div className="hero-deal">{inp.dealName || "Untitled deal"}</div>
             </div>
-            <div className={`hero-verdict ${M.valid ? (M.levIRR >= 15 ? "good" : M.levIRR >= 10 ? "ok" : "weak") : "weak"}`}>
+            <div className={`hero-verdict ${M.valid ? (M.noIRR ? "weak" : M.levIRR >= inp.targetIRR ? "good" : M.levIRR >= 0.66 * inp.targetIRR ? "ok" : "weak") : "weak"}`}>
               {M.valid
                 ? M.noIRR ? "Capital not returned"
-                  : M.levIRR >= 15 ? "Above target return"
-                  : M.levIRR >= 10 ? "Moderate return"
+                  : M.levIRR >= inp.targetIRR ? `Above target (≥${inp.targetIRR}%)`
+                  : M.levIRR >= 0.66 * inp.targetIRR ? "Approaching target"
                   : "Below target return"
                 : "Inputs incomplete"}
             </div>
@@ -200,6 +201,10 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
             sub={dscrSub ? `${dscrSub.text}${M.minDSCR != null ? ` · Min ${F.mul(M.minDSCR)} (Yr ${M.minDSCRYear})` : ""}` : "—"}
             subClass={dscrSub?.cls} />
           <MCard label="Equity Required" val={F.eur(M.equity)} sub={`${(100 - inp.ltv).toFixed(0)}% of price + costs`} />
+          <MCard label="Yield on Cost" val={M.yieldOnCost != null ? F.pct(M.yieldOnCost * 100) : "—"}
+            sub={M.valueAddSpreadBps != null ? `${M.valueAddSpreadBps >= 0 ? "+" : ""}${M.valueAddSpreadBps.toFixed(0)} bps vs exit cap` : "—"} />
+          <MCard label="Debt Yield" val={M.debtYield != null ? F.pct(M.debtYield * 100) : "—"}
+            sub="NOI ÷ loan — lender sizing metric" />
         </div>
 
         {inp.mezzOn && M.valid && (
@@ -313,26 +318,41 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
             <div className="card-title" style={{ fontSize: 12 }}>Annual Cash Flows</div>
             <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 8 }} aria-hidden="true">IO = Interest Only period</div>
             <ResponsiveContainer width="100%" height={185}>
-              <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <BarChart data={chartData} margin={{ top: 0, right: 40, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gk} />
                 <XAxis dataKey="name" tick={{ fontSize: 9, fill: tk }} />
-                <YAxis tick={{ fontSize: 9, fill: tk }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                <YAxis yAxisId="left" tick={{ fontSize: 9, fill: tk }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 9, fill: tk }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
                 <Tooltip formatter={(v) => F.eur(v)} contentStyle={tt} />
                 <Legend wrapperStyle={{ fontSize: 9, color: tk }} />
-                <Bar dataKey="NOI"          fill={PAL.green}   radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Debt Service" fill={PAL.oxblood} radius={[2, 2, 0, 0]} />
-                <Bar dataKey="CFADS"        fill={PAL.brass}   radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Exit Equity"  fill={PAL.slate}   radius={[2, 2, 0, 0]} />
+                <Bar yAxisId="left"  dataKey="NOI"          fill={PAL.green}   radius={[2, 2, 0, 0]} />
+                <Bar yAxisId="left"  dataKey="Debt Service" fill={PAL.oxblood} radius={[2, 2, 0, 0]} />
+                <Bar yAxisId="left"  dataKey="CFADS"        fill={PAL.brass}   radius={[2, 2, 0, 0]} />
+                <Bar yAxisId="right" dataKey="Exit Equity"  fill={PAL.slate}   radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title" style={{ fontSize: 12 }}>Levered IRR Sensitivity</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <div className="card-title" style={{ fontSize: 12, marginBottom: 0 }}>Levered IRR Sensitivity</div>
+              <select
+                value={sensCol}
+                onChange={(e) => setSensCol(e.target.value)}
+                style={{ fontSize: 10, border: "1px solid #e2e8f0", borderRadius: 4, padding: "2px 6px", color: "#475569", background: "var(--surface)" }}
+              >
+                <option value="price">vs Purchase Price (±%)</option>
+                <option value="ltv">vs LTV</option>
+                <option value="noiGrowth">vs NOI Growth</option>
+              </select>
+            </div>
             <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 10 }}>
-              Exit Cap (rows) × LTV (cols) ·{" "}
+              Exit Cap (rows) ×{" "}
+              {sensCol === "price" ? "Purchase Price (±%)" : sensCol === "ltv" ? "LTV" : "NOI Growth"}{" "}
+              (cols) ·{" "}
               <span style={{ fontWeight: 600, color: PAL.green }}>
-                Current: {F.pct(inp.exitCap)} / {inp.ltv}% LTV
+                Current: {F.pct(inp.exitCap)} /{" "}
+                {sensCol === "price" ? F.eur(inp.price) : sensCol === "ltv" ? `${inp.ltv}% LTV` : `${inp.noiGrowth}% g`}
               </span>
             </div>
             <div className="table-scroll">
@@ -340,11 +360,11 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
                 <thead>
                   <tr>
                     <th style={{ fontSize: 9, fontWeight: 500, color: "#94a3b8", padding: "3px 5px", textAlign: "left", width: 55 }}>
-                      Cap ↓ LTV →
+                      Cap ↓ {sensCol === "ltv" ? "LTV" : sensCol === "price" ? "Price" : "g"} →
                     </th>
-                    {SENS.ltvs.map((l) => (
-                      <th key={l} style={{ fontSize: 10, fontWeight: 600, padding: "3px 4px", textAlign: "center", color: l === inp.ltv ? PAL.green : "#94a3b8" }}>
-                        {l}%
+                    {SENS.cols.map((c, ci) => (
+                      <th key={ci} style={{ fontSize: 10, fontWeight: 600, padding: "3px 4px", textAlign: "center", color: Math.abs(c - SENS.currentCol) < 1e-6 ? PAL.green : "#94a3b8" }}>
+                        {SENS.colLabels[ci]}
                       </th>
                     ))}
                   </tr>
@@ -359,7 +379,7 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
                         </td>
                         {SENS.grid[ri].map((irr, ci) => {
                           const s = irrS(irr);
-                          const active = isBase && SENS.ltvs[ci] === inp.ltv;
+                          const active = isBase && Math.abs(SENS.cols[ci] - SENS.currentCol) < 1e-6;
                           return (
                             <td key={ci} style={{
                               padding: "2px 4px", textAlign: "center", fontSize: 10, fontWeight: 600,
@@ -387,6 +407,24 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
               ))}
             </div>
           </div>
+        </div>
+        <div className="card">
+          <div
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+            onClick={() => setMethOpen((o) => !o)}
+          >
+            <div className="card-title" style={{ marginBottom: 0 }}>Methodology &amp; Key Assumptions</div>
+            <span style={{ color: "#94a3b8", fontSize: 11, userSelect: "none" }}>{methOpen ? "▲" : "▼"}</span>
+          </div>
+          {methOpen && (
+            <ul style={{ fontSize: 11, color: "#64748b", lineHeight: 1.75, marginTop: 10, paddingLeft: 18 }}>
+              <li>Exit value = forward (year +1) NOI ÷ exit cap rate.</li>
+              <li>Leverage sized on purchase price (LTV); acquisition costs and capex are equity-funded.</li>
+              <li>Preferred return accrues on committed capital (outstanding-capital method), not a simple coupon.</li>
+              <li>Interest-only loans carry a balloon balance at exit, repaid from sale proceeds.</li>
+              <li>IRR solved numerically (Newton-Raphson with bisection fallback).</li>
+            </ul>
+          )}
         </div>
       </div>
     </div>
