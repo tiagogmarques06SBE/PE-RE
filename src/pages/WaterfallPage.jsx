@@ -40,7 +40,7 @@ export default function WaterfallPage({ inp, M, wf, setWf, dark }) {
 
   const tierRows = [
     { label: "Return of Capital",                       lp: W.lpROC,  gp: W.gpROC,     lpPct: `${wf.lpPct}%`, gpPct: `${wf.gpPct}%` },
-    { label: `Preferred Return (${wf.hurdle}% compounded)`, lp: W.lpPref, gp: 0,           lpPct: "100%",         gpPct: "—"            },
+    { label: `Preferred Return (${wf.hurdle}% IRR hurdle)`,  lp: W.lpPref, gp: 0,           lpPct: "100%",         gpPct: "—"            },
     { label: "GP Catch-Up",                             lp: 0,         gp: W.gpCatchUp, lpPct: "—",            gpPct: "100%"         },
     { label: "Tier 1 Split",                            lp: W.lpT1,   gp: W.gpT1,      lpPct: `${wf.t1LP}%`,  gpPct: `${wf.t1GP}%`  },
     { label: "Tier 2 Split",                            lp: W.lpT2,   gp: W.gpT2,      lpPct: `${wf.t2LP}%`,  gpPct: `${wf.t2GP}%`  },
@@ -79,7 +79,10 @@ export default function WaterfallPage({ inp, M, wf, setWf, dark }) {
         </Sec>
 
         <Sec title="Preferred Return">
-          <NI id="hurdle" label="Hurdle Rate (p.a.)" value={wf.hurdle} onChange={nW("hurdle")} sfx="%" step="0.5" min="0" max="20" />
+          <NI id="hurdle" label="IRR Hurdle (p.a.)" value={wf.hurdle} onChange={nW("hurdle")} sfx="%" step="0.5" min="0" max="20" />
+          <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 8, lineHeight: 1.5 }}>
+            True IRR hurdle: pref accrues on outstanding capital only, so early distributions reduce the pref owed — matching LP/GP IRR reconciliation.
+          </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <span style={{ fontSize: 10, color: "#475569" }}>GP Catch-Up</span>
             <button type="button" className="btn" aria-pressed={wf.catchUp}
@@ -217,7 +220,9 @@ export default function WaterfallPage({ inp, M, wf, setWf, dark }) {
                 of total distributions — at <strong>{F.pct(W.gpIRR)}</strong> IRR vs{" "}
                 <strong>{F.pct(W.lpIRR)}</strong> for the LP.
                 The <strong>{F.eur(W.gpPromote)}</strong> promote is earned through
-                performance above the {wf.hurdle}% preferred return.
+                performance above the {wf.hurdle}% IRR hurdle. Negative interim cash
+                flows are not modelled as capital calls — LP/GP IRRs may diverge from
+                deal IRR in early-negative-CFADS scenarios.
               </div>
             </div>
           </div>

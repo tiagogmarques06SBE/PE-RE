@@ -71,15 +71,18 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
           <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
             Loan: {F.eur(M.loan)}<br />Equity: {F.eur(M.equity)}
           </div>
+          <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 6 }}>LTV sized on purchase price. Acq. costs &amp; CapEx are 100% equity-funded.</div>
           <NI id="intRate" label="Interest Rate" value={inp.intRate} onChange={num("intRate")} sfx="%" step="0.25" min="0" max="15" />
           <NI id="amortYrs" label="Amortisation (years)" value={inp.amortYrs} onChange={num("amortYrs")} step="1" min="5" max="40" />
           <NI id="ioYrs" label="Interest Only (years)" value={inp.ioYrs} onChange={num("ioYrs")} step="1" min="0" max="10" />
+          <div style={{ fontSize: 9, color: "#94a3b8" }}>IO-then-amortising uses full-term payment; residual balloon exits at hold-period end.</div>
         </Sec>
 
         <Sec title="Exit">
           <NI id="hold" label="Hold Period (years)" value={inp.hold} onChange={num("hold")} step="1" min="1" max="15" />
           <NI id="exitCap" label="Exit Cap Rate" value={inp.exitCap} onChange={num("exitCap")} sfx="%" step="0.25" min="1" max="15" />
           <NI id="exitCosts" label="Disposal Costs" value={inp.exitCosts} onChange={num("exitCosts")} sfx="%" step="0.25" min="0" max="5" />
+          <div style={{ fontSize: 9, color: "#94a3b8" }}>Exit valued on Year HP+1 (forward) NOI — buyer prices on forward earnings.</div>
         </Sec>
 
         <Sec title="Capital Expenditure">

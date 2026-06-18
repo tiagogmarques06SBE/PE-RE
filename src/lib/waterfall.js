@@ -1,31 +1,45 @@
 import { calcIRR } from "./irr";
 
-function allocateDistribution(dist, state, wf, lpCap, gpCap, HP) {
+// IRR-based hurdle via the "outstanding capital account" method.
+// state.lpHurdle starts at lpCap, compounds at the hurdle rate each period,
+// and is reduced by every LP receipt (ROC first, then pref). When it reaches
+// zero the IRR hurdle is cleared. This is mathematically equivalent to an IRR
+// test: -lpCap + Σ lpReceipts_i / (1+h)^i = 0.
+function allocateDistribution(dist, state, wf, lpCap, gpCap) {
   let rem = Math.max(0, dist);
   const yr = { lp: 0, gp: 0 };
   if (rem <= 0) return yr;
 
-  const hurdle = wf.hurdle / 100;
   const t1LP = wf.t1LP / 100, t1GP = wf.t1GP / 100;
   const t2LP = wf.t2LP / 100, t2GP = wf.t2GP / 100;
-  const lpPrefTarget = lpCap * ((1 + hurdle) ** HP - 1);
 
+  // 1. Return of LP capital
   const lpROC = Math.min(rem, Math.max(0, lpCap - state.lpROC));
   yr.lp += lpROC; state.lpROC += lpROC; rem -= lpROC;
+  state.lpHurdle -= lpROC; // returning capital reduces the outstanding hurdle balance
 
+  // 2. Return of GP capital
   const gpROC = Math.min(rem, Math.max(0, gpCap - state.gpROC));
   yr.gp += gpROC; state.gpROC += gpROC; rem -= gpROC;
 
-  const lpPref = Math.min(rem, Math.max(0, lpPrefTarget - state.lpPref));
-  yr.lp += lpPref; state.lpPref += lpPref; rem -= lpPref;
+  // 3. LP preferred return — pays down the compounded hurdle balance
+  const lpPref = Math.min(rem, Math.max(0, state.lpHurdle));
+  yr.lp += lpPref; state.lpPref += lpPref;
+  state.lpHurdle -= lpPref; rem -= lpPref;
 
+  // 4. GP catch-up (if enabled)
   if (wf.catchUp && rem > 0 && t1LP > 0) {
     const catchUpTarget = (state.lpPref * t1GP) / t1LP;
     const gpCatch = Math.min(rem, Math.max(0, catchUpTarget - state.gpCatchUp));
     yr.gp += gpCatch; state.gpCatchUp += gpCatch; rem -= gpCatch;
   }
 
-  const lpNeedForT2 = Math.max(0, lpCap * wf.t2EMThreshold - state.lpROC - state.lpPref);
+  // 5. Tier 1 split — until LP cumulative receipts reach T2 EM threshold.
+  // Fix: subtract ALL prior LP receipts (ROC + pref + T1 + T2 already paid).
+  const lpNeedForT2 = Math.max(
+    0,
+    lpCap * wf.t2EMThreshold - state.lpROC - state.lpPref - state.lpT1 - state.lpT2
+  );
   if (rem > 0 && lpNeedForT2 > 0 && t1LP > 0) {
     const pool = Math.min(rem, lpNeedForT2 / t1LP);
     const lpT1 = pool * t1LP, gpT1 = pool * t1GP;
@@ -34,6 +48,7 @@ function allocateDistribution(dist, state, wf, lpCap, gpCap, HP) {
     rem -= pool;
   }
 
+  // 6. Tier 2 split (above EM threshold)
   if (rem > 0) {
     const lpT2 = rem * t2LP, gpT2 = rem * t2GP;
     yr.lp += lpT2; yr.gp += gpT2;
@@ -56,19 +71,34 @@ export function computeWaterfall(M, wf) {
   }
 
   const { equity, rows, HP } = M;
+  const hurdle = wf.hurdle / 100;
   const lpPct = wf.lpPct / 100, gpPct = wf.gpPct / 100;
   const lpCap = equity * lpPct, gpCap = equity * gpPct;
 
-  const state = { lpROC: 0, gpROC: 0, lpPref: 0, gpCatchUp: 0, lpT1: 0, gpT1: 0, lpT2: 0, gpT2: 0 };
+  const state = {
+    lpROC: 0, gpROC: 0,
+    lpPref: 0, gpCatchUp: 0,
+    lpT1: 0, gpT1: 0, lpT2: 0, gpT2: 0,
+    // IRR hurdle account: starts at committed capital, compounds at hurdle rate each year,
+    // reduced by LP receipts. Reaches zero exactly when LP IRR = hurdle rate.
+    lpHurdle: lpCap,
+  };
+
   const lpCF = [-lpCap];
   const gpCF = [-gpCap];
 
   for (let yr = 1; yr <= HP; yr++) {
+    // Compound the hurdle account before this period's distributions
+    state.lpHurdle *= (1 + hurdle);
+
     const row = rows[yr - 1];
+    // Note: negative CFADS (e.g. from heavy debt service in early years) are floored
+    // at zero here — capital calls are not modelled, so LP/GP IRRs may not reconcile
+    // to the deal IRR in high-leverage / low-yield scenarios.
     let dist = Math.max(0, row.cfads);
     if (yr === HP) dist += Math.max(0, row.exitEq);
 
-    const split = allocateDistribution(dist, state, wf, lpCap, gpCap, HP);
+    const split = allocateDistribution(dist, state, wf, lpCap, gpCap);
     lpCF.push(split.lp);
     gpCF.push(split.gp);
   }
