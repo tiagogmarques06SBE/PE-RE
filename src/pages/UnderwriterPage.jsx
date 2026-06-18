@@ -103,6 +103,49 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
           <NI id="refiCosts" label="Refi Costs" value={inp.refiCosts} onChange={num("refiCosts")} sfx="%" step="0.25" min="0" max="5" />
           <div style={{ fontSize: 9, color: "#94a3b8" }}>0 = no refinancing.</div>
         </Sec>
+
+        <Sec title="Mezzanine / Junior Debt">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontSize: 12, color: "var(--ink-2)", fontWeight: 500 }}>Enable Mezzanine</span>
+            <button
+              type="button"
+              onClick={() => setInp((p) => ({ ...p, mezzOn: !p.mezzOn }))}
+              style={{
+                background: inp.mezzOn ? PAL.slate : "#e2e8f0",
+                color: inp.mezzOn ? "#fff" : "#94a3b8",
+                border: "none", borderRadius: 12, padding: "3px 14px",
+                fontWeight: 600, fontSize: 12, cursor: "pointer",
+              }}
+            >
+              {inp.mezzOn ? "ON" : "OFF"}
+            </button>
+          </div>
+          <div style={{ opacity: inp.mezzOn ? 1 : 0.35, pointerEvents: inp.mezzOn ? "auto" : "none" }}>
+            <NI id="mezzLtv" label="Mezz LTV (% of price)" value={inp.mezzLtv} onChange={num("mezzLtv")} sfx="%" step="5" min="0" max="30" />
+            <NI id="mezzRate" label="Mezz Rate (% p.a.)" value={inp.mezzRate} onChange={num("mezzRate")} sfx="%" step="0.5" min="0" max="30" />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Interest type</span>
+              <button
+                type="button"
+                onClick={() => setInp((p) => ({ ...p, mezzPik: !p.mezzPik }))}
+                style={{
+                  background: inp.mezzPik ? "#8b5cf6" : "#e2e8f0",
+                  color: inp.mezzPik ? "#fff" : "#94a3b8",
+                  border: "none", borderRadius: 12, padding: "3px 14px",
+                  fontWeight: 600, fontSize: 12, cursor: "pointer",
+                }}
+              >
+                {inp.mezzPik ? "PIK" : "Cash"}
+              </button>
+            </div>
+            {inp.mezzOn && (
+              <div style={{ fontSize: 9, color: "#94a3b8", lineHeight: 1.5 }}>
+                Senior {inp.ltv}% + Mezz {inp.mezzLtv}% → Whole loan {inp.ltv + inp.mezzLtv}% LTV
+                {M.mezzLoan > 0 && <span> · {M.mezzPik ? "PIK" : "Cash-pay"} · Mezz: {F.eur(M.mezzLoan)}</span>}
+              </div>
+            )}
+          </div>
+        </Sec>
       </aside>
 
       <div className="main-panel">
@@ -153,11 +196,61 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
           <MCard label="Cash-on-Cash (Year 1)" val={F.pct(M.coc)} sub="CFADS ÷ equity invested" />
           <MCard label="Entry Cap Rate" val={F.pct(M.capIn)}
             sub={`Exit cap ${F.pct(inp.exitCap)} · ${inp.exitCap > M.capIn ? "Cap expansion ↑" : "Cap compression ↓"}`} />
-          <MCard label="DSCR — Year 1" val={F.mul(M.dscr1)}
+          <MCard label={inp.mezzOn ? "Senior DSCR — Year 1" : "DSCR — Year 1"} val={F.mul(M.dscr1)}
             sub={dscrSub ? `${dscrSub.text}${M.minDSCR != null ? ` · Min ${F.mul(M.minDSCR)} (Yr ${M.minDSCRYear})` : ""}` : "—"}
             subClass={dscrSub?.cls} />
           <MCard label="Equity Required" val={F.eur(M.equity)} sub={`${(100 - inp.ltv).toFixed(0)}% of price + costs`} />
         </div>
+
+        {inp.mezzOn && M.valid && (
+          <div className="metric-grid" style={{ marginTop: -8 }}>
+            <MCard label="Whole-Loan LTV" val={`${M.wholeLoanLTV.toFixed(0)}%`}
+              sub={`Senior ${inp.ltv}% + Mezz ${inp.mezzLtv}%`} />
+            <MCard label="Blended Debt Rate" val={`${M.blendedDebtRate.toFixed(2)}%`}
+              sub={`Senior ${inp.intRate}% · Mezz ${inp.mezzRate}%`} />
+            <MCard label="WL DSCR — Year 1" val={F.mul(M.rows[0]?.wholeLoanDSCR)}
+              sub={M.minWholeLoanDSCR != null ? `Min ${F.mul(M.minWholeLoanDSCR)} over hold` : "—"}
+              subClass={M.rows[0]?.wholeLoanDSCR != null && M.rows[0].wholeLoanDSCR < 1.0 ? "mcard-warn" : M.rows[0]?.wholeLoanDSCR != null && M.rows[0].wholeLoanDSCR < 1.2 ? "mcard-warn" : "mcard-ok"} />
+            <MCard label="Mezzanine Loan" val={F.eur(M.mezzLoan)}
+              sub={inp.mezzPik ? "PIK — accrues to exit" : "Cash-pay — IO bullet"} />
+          </div>
+        )}
+
+        {inp.mezzOn && M.valid && M.mezzLoan > 0 && (
+          <div className="card">
+            <div className="card-title">Mezzanine Debt Schedule</div>
+            <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 8 }}>
+              {inp.mezzPik ? "PIK — interest accrues to balance, repaid at exit." : "Cash-pay — IO bullet, interest paid annually."}
+            </div>
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr style={{ background: totalRowBg }}>
+                    {["Year", "Mezz Balance (BOP)", "Interest", inp.mezzPik ? "PIK Added" : "Cash Pay", "Mezz Balance (EOP)"].map((h) => (
+                      <th key={h} style={{ textAlign: h === "Year" ? "left" : "right" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {M.rows.map((d) => {
+                    const bopBal = d.yr === 1 ? M.mezzLoan : (M.rows[d.yr - 2]?.mezzBal ?? M.mezzLoan);
+                    return (
+                      <tr key={d.yr} style={{ borderTop: "1px solid #f8fafc", background: d.yr === M.HP ? exitRowBg : "" }}>
+                        <td style={{ fontWeight: 500, color: "#475569" }}>{d.yr}{d.yr === M.HP ? " · Exit" : ""}</td>
+                        <td style={{ textAlign: "right", color: "#64748b" }}>{F.eur(bopBal)}</td>
+                        <td style={{ textAlign: "right", color: "#f87171" }}>({F.eur(d.mezzInterest)})</td>
+                        <td style={{ textAlign: "right", color: inp.mezzPik ? "#8b5cf6" : "#f87171" }}>
+                          {inp.mezzPik ? `+${F.eur(d.mezzBal - bopBal)}` : `(${F.eur(d.mezzCashPay)})`}
+                        </td>
+                        <td style={{ textAlign: "right", fontWeight: 600, color: "#475569" }}>{F.eur(d.mezzBal)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {M.valid && <SourcesUsesCard inp={inp} M={M} />}
 

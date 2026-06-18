@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import AttributionWaterfall from "../components/charts/AttributionWaterfall";
+import ExitBridgeChart from "../components/charts/ExitBridgeChart";
 import TornadoChart from "../components/charts/TornadoChart";
 import InvalidPanel from "../components/ui/InvalidPanel";
 import {
@@ -58,6 +59,15 @@ export default function AnalysisPage({ inp, M, dark }) {
           assumptions the return depends on most.
         </div>
         <TornadoChart data={tornado} />
+      </div>
+
+      <div className="card">
+        <div className="card-title">Exit Equity Bridge</div>
+        <div className="card-sub">
+          How the gross sale value flows to equity investors after costs, senior repayment
+          {inp.mezzOn ? ", and mezzanine repayment" : ""}.
+        </div>
+        <ExitBridgeChart M={M} inp={inp} dark={dark} />
       </div>
 
       <div className="two-col-equal">

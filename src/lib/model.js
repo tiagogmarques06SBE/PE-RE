@@ -12,11 +12,16 @@ export function validateInputs(i) {
   if (i.hold < 1 || i.hold > 30) errors.push("Hold period must be between 1 and 30 years.");
   if (i.amortYrs < 1) errors.push("Amortisation must be at least 1 year.");
   if (i.ioYrs < 0 || i.ioYrs > i.hold) errors.push("Interest-only period cannot exceed hold period.");
+  if (i.mezzOn) {
+    if ((i.mezzRate || 0) < 0 || (i.mezzRate || 0) > 30) errors.push("Mezzanine rate must be between 0% and 30%.");
+    if ((i.mezzLtv || 0) < 0) errors.push("Mezzanine LTV must be non-negative.");
+  }
 
   const totalAcq = i.price * (1 + i.acqCosts / 100);
   const loan = i.price * i.ltv / 100;
-  if (totalAcq - loan <= 0) {
-    errors.push("Equity must be positive — reduce LTV or check acquisition costs.");
+  const mezzLoan = i.mezzOn ? i.price * ((i.mezzLtv || 0) / 100) : 0;
+  if (totalAcq - loan - mezzLoan <= 0) {
+    errors.push("Equity must be positive — reduce leverage or check acquisition costs.");
   }
   return errors;
 }
@@ -34,7 +39,12 @@ export function buildLeveredCFs(i, noiOverride) {
   const capex = Math.max(0, i.capex || 0);
   const totalAcq = i.price * (1 + i.acqCosts / 100) + capex;
   const loan = i.price * i.ltv / 100;
-  const equity = totalAcq - loan;
+
+  const mezzLoan = i.mezzOn ? i.price * ((i.mezzLtv || 0) / 100) : 0;
+  const mezzRate = (i.mezzRate || 0) / 100;
+  const mezzPik = !!(i.mezzOn && i.mezzPik);
+
+  const equity = totalAcq - loan - mezzLoan;
   let annPay = pmt(loan, i.intRate, AY);
 
   const leaseUp = Math.max(0, Math.round(i.leaseUpYrs || 0));
@@ -50,11 +60,13 @@ export function buildLeveredCFs(i, noiOverride) {
   const refiActive = refiYr > 0 && refiYr < HP;
   const refiCapR = i.refiCap != null ? i.refiCap : i.exitCap;
   let refiEvent = null;
+  let exitGross = 0;
 
   const rows = [];
   const levCF = [-equity];
   const unlevCF = [-totalAcq];
   let bal = loan;
+  let mezzBal = mezzLoan;
 
   for (let yr = 1; yr <= HP; yr++) {
     const yrNOI = noiAt(yr);
@@ -64,6 +76,20 @@ export function buildLeveredCFs(i, noiOverride) {
     bal = Math.max(0, bal - prin);
 
     const dscr = ds > 0 ? yrNOI / ds : null;
+
+    // Mezzanine: interest accrues, then either PIK (compounds) or cash-pay
+    const mezzInterest = mezzBal * mezzRate;
+    let mezzCashPay = 0;
+    if (i.mezzOn) {
+      if (mezzPik) {
+        mezzBal = mezzBal * (1 + mezzRate); // PIK: balance compounds, no cash out
+      } else {
+        mezzCashPay = mezzInterest; // cash-pay: IO bullet, balance unchanged
+      }
+    }
+
+    const wholeLoanDS = ds + mezzCashPay;
+    const wholeLoanDSCR = wholeLoanDS > 0 ? yrNOI / wholeLoanDS : null;
 
     let cashOut = 0;
     if (refiActive && yr === refiYr) {
@@ -78,19 +104,19 @@ export function buildLeveredCFs(i, noiOverride) {
       refiEvent = { yr, refiValue, newLoan, oldBal, cashOut };
     }
 
-    const cfads = yrNOI - ds;
+    const cfads = yrNOI - ds - mezzCashPay;
     let exitEq = 0;
 
     if (yr === HP) {
       const xnoi = noi * (1 + g) ** HP;
-      const gs = i.exitCap > 0 ? xnoi / (i.exitCap / 100) : 0;
-      exitEq = gs * (1 - i.exitCosts / 100) - bal;
-      unlevCF.push(yrNOI + gs * (1 - i.exitCosts / 100));
+      exitGross = i.exitCap > 0 ? xnoi / (i.exitCap / 100) : 0;
+      exitEq = exitGross * (1 - i.exitCosts / 100) - bal - mezzBal;
+      unlevCF.push(yrNOI + exitGross * (1 - i.exitCosts / 100));
     } else {
       unlevCF.push(yrNOI);
     }
 
-    rows.push({ yr, yrNOI, int: int_, prin, ds, cfads, dscr, bal, exitEq, cashOut });
+    rows.push({ yr, yrNOI, int: int_, prin, ds, cfads, dscr, wholeLoanDSCR, bal, exitEq, cashOut, mezzInterest, mezzCashPay, mezzBal });
     levCF.push(cfads + exitEq + cashOut);
   }
 
@@ -98,7 +124,23 @@ export function buildLeveredCFs(i, noiOverride) {
   const minDSCR = dscrValues.length ? Math.min(...dscrValues) : null;
   const minDSCRYear = minDSCR != null ? rows.find((r) => r.dscr === minDSCR)?.yr ?? null : null;
 
-  return { egi, noi, entryNOI, capIn, loan, equity, totalAcq, capex, refiEvent, rows, levCF, unlevCF, HP, IO, minDSCR, minDSCRYear };
+  const wlDscrValues = rows.map((r) => r.wholeLoanDSCR).filter((v) => v != null && isFinite(v));
+  const minWholeLoanDSCR = wlDscrValues.length ? Math.min(...wlDscrValues) : null;
+
+  const totalDebt = loan + mezzLoan;
+  const blendedDebtRate = totalDebt > 0
+    ? (loan * (i.intRate || 0) + mezzLoan * (i.mezzRate || 0)) / totalDebt
+    : 0;
+  const wholeLoanLTV = (i.ltv || 0) + (i.mezzOn ? (i.mezzLtv || 0) : 0);
+
+  return {
+    egi, noi, entryNOI, capIn,
+    loan, mezzLoan, equity, totalAcq, capex,
+    refiEvent, exitGross,
+    rows, levCF, unlevCF, HP, IO,
+    minDSCR, minDSCRYear, minWholeLoanDSCR,
+    blendedDebtRate, wholeLoanLTV,
+  };
 }
 
 export function computeModel(i) {

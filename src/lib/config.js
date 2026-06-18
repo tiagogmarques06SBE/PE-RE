@@ -32,6 +32,10 @@ export const DEF = {
   refiCap: 5.25,
   refiCosts: 1.0,
   targetIRR: 15,
+  mezzOn: false,
+  mezzLtv: 0,
+  mezzRate: 10,
+  mezzPik: false,
 };
 
 export const WF_DEF = {
@@ -53,6 +57,7 @@ export const INP_KEYS = [
   "hold", "exitCap", "exitCosts",
   "capex", "leaseUpYrs", "entryVacancy",
   "refiYr", "refiLtv", "refiCap", "refiCosts", "targetIRR",
+  "mezzOn", "mezzLtv", "mezzRate", "mezzPik",
 ];
 
 export const WF_KEYS = [

@@ -32,7 +32,8 @@ export function computeAttribution(M, i) {
   const disposal = exitGross * (i.exitCosts / 100);
   const acqCostsAmt = i.price * (i.acqCosts / 100);
   const capex = M.capex || 0;
-  const opIncome = M.rows.reduce((a, r) => a + r.cfads, 0);
+  // Gross of mezz so that senior operating income is isolated; mezz cost shown separately
+  const opIncome = M.rows.reduce((a, r) => a + r.yrNOI - r.ds, 0);
   const refiProceeds = M.rows.reduce((a, r) => a + (r.cashOut || 0), 0);
   const balExit = M.rows[HP - 1].bal;
   const debtPaydown = M.loan - balExit;
@@ -49,6 +50,12 @@ export function computeAttribution(M, i) {
   items.push({ key: "disposal", label: "Disposal Costs",        val: -disposal });
   items.push({ key: "acq",      label: "Acquisition Costs",     val: -acqCostsAmt });
   if (capex > 0) items.push({ key: "capex", label: "Capital Expenditure", val: -capex });
+  if (i.mezzOn && (M.mezzLoan || 0) > 0) {
+    const mezzCashTotal = M.rows.reduce((a, r) => a + (r.mezzCashPay || 0), 0);
+    const mezzBalExit = M.rows[HP - 1].mezzBal || 0;
+    const mezzCostTotal = mezzCashTotal + (mezzBalExit - (M.mezzLoan || 0));
+    items.push({ key: "mezz", label: "Mezzanine Financing Cost", val: -mezzCostTotal });
+  }
 
   const profit = items.reduce((a, x) => a + x.val, 0);
   return { valid: true, items, profit, equity: M.equity, totalReturned: M.totalDist };
