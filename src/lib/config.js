@@ -61,20 +61,38 @@ export const INP_KEYS = [
 ];
 
 export const PRESETS = {
-  base: { label: "Lisbon Office — Value Add", inp: { ...DEF } },
-  mezz: {
-    label: "Value-Add + Mezzanine",
-    inp: {
-      ...DEF,
-      capex: 600000,
-      leaseUpYrs: 2,
-      entryVacancy: 25,
-      noiGrowth: 4,
-      mezzOn: true,
-      mezzLtv: 15,
-      mezzRate: 11,
-      mezzPik: false,
-    },
+  core: {
+    label: "Core — Prime Office",
+    inp: { ...DEF, dealName: "Prime Office — Core", assetClass: "office",
+      grossRev: 700000, vacancy: 4, opexPct: 18, noiGrowth: 2,
+      price: 11500000, acqCosts: 2, ltv: 45, intRate: 4.0, amortYrs: 30, ioYrs: 2,
+      hold: 7, exitCap: 4.85, exitCosts: 1.5, capex: 0, leaseUpYrs: 0, entryVacancy: 4,
+      refiYr: 0, mezzOn: false, targetIRR: 8 },
+  },
+  corePlus: {
+    label: "Core-Plus — Light Value-Add",
+    inp: { ...DEF, dealName: "Office — Core-Plus", assetClass: "office",
+      grossRev: 700000, vacancy: 7, opexPct: 20, noiGrowth: 3.5,
+      price: 10200000, acqCosts: 2, ltv: 58, intRate: 4.25, amortYrs: 30, ioYrs: 2,
+      hold: 6, exitCap: 5.15, exitCosts: 1.5, capex: 150000, leaseUpYrs: 1, entryVacancy: 12,
+      refiYr: 0, mezzOn: false, targetIRR: 11 },
+  },
+  valueAdd: {
+    label: "Value-Add — Reposition & Lease-Up",
+    inp: { ...DEF, dealName: "Lisbon Office — Value-Add", assetClass: "office",
+      grossRev: 700000, vacancy: 8, opexPct: 20, noiGrowth: 4.5,
+      price: 9000000, acqCosts: 2, ltv: 63, intRate: 4.5, amortYrs: 25, ioYrs: 2,
+      hold: 5, exitCap: 5.25, exitCosts: 1.5, capex: 600000, leaseUpYrs: 2, entryVacancy: 20,
+      refiYr: 0, mezzOn: false, targetIRR: 15 },
+  },
+  opportunistic: {
+    label: "Opportunistic — Reposition + PIK Mezz",
+    inp: { ...DEF, dealName: "Office Reposition — Opportunistic", assetClass: "office",
+      grossRev: 800000, vacancy: 10, opexPct: 22, noiGrowth: 7,
+      price: 9500000, acqCosts: 2, ltv: 70, intRate: 5.0, amortYrs: 25, ioYrs: 3,
+      hold: 4, exitCap: 5.25, exitCosts: 1.5, capex: 1200000, leaseUpYrs: 3, entryVacancy: 35,
+      refiYr: 2, refiLtv: 72, refiCap: 5.5, refiCosts: 1.0,
+      mezzOn: true, mezzLtv: 15, mezzRate: 12, mezzPik: true, targetIRR: 20 },
   },
 };
 

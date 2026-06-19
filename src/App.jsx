@@ -91,7 +91,7 @@ export default function App() {
             aria-label="Load preset deal"
             title="Load a preset deal"
           >
-            <option value="" disabled>Load preset…</option>
+            <option value="" disabled>Load example deal…</option>
             {Object.entries(PRESETS).map(([k, p]) => (
               <option key={k} value={k}>{p.label}</option>
             ))}
