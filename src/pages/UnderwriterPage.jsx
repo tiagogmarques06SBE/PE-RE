@@ -201,7 +201,7 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
           <MCard label="Yield on Cost" val={M.yieldOnCost != null ? F.pct(M.yieldOnCost * 100) : "—"}
             sub={M.valueAddSpreadBps != null ? `${M.valueAddSpreadBps >= 0 ? "+" : ""}${M.valueAddSpreadBps.toFixed(0)} bps vs exit cap` : "—"} />
           <MCard label="Debt Yield" val={M.debtYield != null ? F.pct(M.debtYield * 100) : "—"}
-            sub="NOI ÷ loan — lender sizing metric" />
+            sub={inp.mezzOn && M.wholeLoanDebtYield != null ? `Whole-loan ${F.pct(M.wholeLoanDebtYield * 100)}` : "NOI ÷ loan — lender metric"} />
         </div>
 
         {inp.mezzOn && M.valid && (
@@ -211,8 +211,8 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
             <MCard label="Blended Debt Rate" val={`${M.blendedDebtRate.toFixed(2)}%`}
               sub={`Senior ${inp.intRate}% · Mezz ${inp.mezzRate}%`} />
             <MCard label="WL DSCR — Year 1" val={F.mul(M.rows[0]?.wholeLoanDSCR)}
-              sub={M.minWholeLoanDSCR != null ? `Min ${F.mul(M.minWholeLoanDSCR)} over hold` : "—"}
-              subClass={M.rows[0]?.wholeLoanDSCR != null && M.rows[0].wholeLoanDSCR < 1.0 ? "mcard-warn" : M.rows[0]?.wholeLoanDSCR != null && M.rows[0].wholeLoanDSCR < 1.2 ? "mcard-warn" : "mcard-ok"} />
+              sub={(() => { const v = M.rows[0]?.wholeLoanDSCR; return v == null ? "—" : v < 1.0 ? "Below 1.0× — covenant breach" : v < 1.2 ? "Thin cushion" : M.minWholeLoanDSCR != null ? `Min ${F.mul(M.minWholeLoanDSCR)} over hold` : "—"; })()}
+              subClass={(() => { const v = M.rows[0]?.wholeLoanDSCR; return v != null && v < 1.2 ? "mcard-warn" : "mcard-ok"; })()} />
             <MCard label="Mezzanine Loan" val={F.eur(M.mezzLoan)}
               sub={inp.mezzPik ? "PIK — accrues to exit" : "Cash-pay — IO bullet"} />
           </div>

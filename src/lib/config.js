@@ -60,6 +60,24 @@ export const INP_KEYS = [
   "mezzOn", "mezzLtv", "mezzRate", "mezzPik",
 ];
 
+export const PRESETS = {
+  base: { label: "Lisbon Office — Value Add", inp: { ...DEF } },
+  mezz: {
+    label: "Value-Add + Mezzanine",
+    inp: {
+      ...DEF,
+      capex: 600000,
+      leaseUpYrs: 2,
+      entryVacancy: 25,
+      noiGrowth: 4,
+      mezzOn: true,
+      mezzLtv: 15,
+      mezzRate: 11,
+      mezzPik: false,
+    },
+  },
+};
+
 export const WF_KEYS = [
   "lpPct", "gpPct", "hurdle", "catchUp",
   "t1LP", "t1GP", "t2LP", "t2GP", "t2EMThreshold",

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 
-import { DEF, WF_DEF, AC } from "./lib/config";
+import { DEF, WF_DEF, AC, PRESETS } from "./lib/config";
 import { computeModel } from "./lib/model";
 import { readStateFromUrl, writeStateToUrl } from "./lib/url";
 import { BRAND, TABS } from "./constants";
@@ -84,6 +84,18 @@ export default function App() {
         <div className="top-nav-spacer" />
 
         <div className="top-nav-fields">
+          <select
+            className="nav-select"
+            defaultValue=""
+            onChange={(e) => { if (e.target.value) setInp({ ...PRESETS[e.target.value].inp }); e.target.value = ""; }}
+            aria-label="Load preset deal"
+            title="Load a preset deal"
+          >
+            <option value="" disabled>Load preset…</option>
+            {Object.entries(PRESETS).map(([k, p]) => (
+              <option key={k} value={k}>{p.label}</option>
+            ))}
+          </select>
           <input
             className="nav-input deal-name"
             value={inp.dealName}

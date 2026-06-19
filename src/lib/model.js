@@ -150,6 +150,7 @@ export function computeModel(i) {
 
   const yieldOnCost = rest.totalAcq > 0 ? rest.noi / rest.totalAcq : null;
   const debtYield = rest.loan > 0 ? rest.noi / rest.loan : null;
+  const wholeLoanDebtYield = (rest.loan + (rest.mezzLoan || 0)) > 0 ? rest.noi / (rest.loan + (rest.mezzLoan || 0)) : null;
   const valueAddSpreadBps = yieldOnCost != null ? (yieldOnCost - i.exitCap / 100) * 10000 : null;
 
   const base = {
@@ -159,6 +160,7 @@ export function computeModel(i) {
     levCF,
     yieldOnCost,
     debtYield,
+    wholeLoanDebtYield,
     valueAddSpreadBps,
     levIRR: NaN,
     unlevIRR: NaN,
