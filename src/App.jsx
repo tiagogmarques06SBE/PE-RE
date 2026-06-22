@@ -1136,8 +1136,13 @@ export default function App() {
           <select
             className="nav-select"
             value={inp.assetClass}
-            onChange={e => setInp(p => ({ ...p, assetClass: e.target.value }))}
-            aria-label="Asset class"
+            onChange={e => {
+              const key = e.target.value;
+              const preset = AC[key]?.d || {};
+              setInp(p => ({ ...p, assetClass: key, ...preset }));
+            }}
+            aria-label="Asset class (loads typical assumptions for the sector)"
+            title="Switching loads typical assumptions for that sector"
           >
             {Object.entries(AC).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}
           </select>

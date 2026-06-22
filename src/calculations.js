@@ -68,16 +68,71 @@ export const F = {
   },
 };
 
-/* ─── Asset class config ──────────────────────────────────── */
+/* ─── Asset class config ──────────────────────────────────────
+   Each class carries (a) the line-item labels that reskin the
+   sidebar and (b) `d`: a full set of sensible Iberian default
+   assumptions loaded when the class is selected. Office === the
+   reference deal (do not change without re-checking the IRR set).
+   ──────────────────────────────────────────────────────────── */
 export const AC = {
-  industrial:  { name: "Industrial / Logistics", rev: "Contracted Rent",     vac: "Void Allowance",        opx: "Property Running Costs"  },
-  residential: { name: "Residential / BTR",      rev: "Gross Rent Roll",     vac: "Vacancy & Bad Debt",    opx: "Operating Expenses"      },
-  office:      { name: "Office",                 rev: "Passing Rent",        vac: "Void Allowance",        opx: "Non-Recoverable Costs"   },
-  hospitality: { name: "Hospitality",            rev: "Total Hotel Revenue", vac: "Mgmt & Franchise Fees", opx: "Hotel Operating Costs"   },
-  retail:      { name: "Retail",                 rev: "Gross Passing Rent",  vac: "Vacancy Allowance",     opx: "Non-Recoverable OpEx"    },
-  student:     { name: "Student Housing / PBSA", rev: "Gross Rent Roll",     vac: "Occupancy Discount",    opx: "Operating & Mgmt Costs"  },
-  development: { name: "Development / BTS",      rev: "GDV / End Value",     vac: "Stabilisation Disc.",   opx: "Construction Costs"      },
+  industrial: {
+    name: "Industrial / Logistics", rev: "Contracted Rent", vac: "Void Allowance", opx: "Property Running Costs",
+    // Prime logistics: triple-net leases, low non-recoverable opex, tight yields
+    d: { grossRev: 780000, vacancy: 4, opexPct: 8, noiGrowth: 3.5, price: 12000000, acqCosts: 2,
+         ltv: 55, intRate: 4.5, amortYrs: 25, ioYrs: 2, hold: 5, exitCap: 5.5, exitCosts: 1.25,
+         capex: 0, leaseUpYrs: 0, entryVacancy: 4, refiYr: 0 },
+  },
+  residential: {
+    name: "Residential / BTR", rev: "Gross Rent Roll", vac: "Vacancy & Bad Debt", opx: "Operating Expenses",
+    // BTR: low yields, growth-driven, cheaper/longer debt, heavier opex
+    d: { grossRev: 900000, vacancy: 5, opexPct: 28, noiGrowth: 3.5, price: 15000000, acqCosts: 2,
+         ltv: 60, intRate: 4.25, amortYrs: 30, ioYrs: 2, hold: 5, exitCap: 4.0, exitCosts: 1.5,
+         capex: 0, leaseUpYrs: 0, entryVacancy: 5, refiYr: 0 },
+  },
+  office: {
+    name: "Office", rev: "Passing Rent", vac: "Void Allowance", opx: "Non-Recoverable Costs",
+    // === Reference deal — keep in sync with DEF ===
+    d: { grossRev: 700000, vacancy: 8, opexPct: 20, noiGrowth: 3, price: 9000000, acqCosts: 2,
+         ltv: 60, intRate: 4.5, amortYrs: 25, ioYrs: 2, hold: 5, exitCap: 5.25, exitCosts: 1.5,
+         capex: 0, leaseUpYrs: 0, entryVacancy: 8, refiYr: 0 },
+  },
+  hospitality: {
+    name: "Hospitality", rev: "Total Hotel Revenue", vac: "Mgmt & Franchise Fees", opx: "Hotel Operating Costs",
+    // Operational asset: high revenue/value, ~30% flow-through, lower leverage, pricier debt
+    d: { grossRev: 5200000, vacancy: 4, opexPct: 72, noiGrowth: 3, price: 20000000, acqCosts: 2.5,
+         ltv: 55, intRate: 5.0, amortYrs: 20, ioYrs: 1, hold: 5, exitCap: 7.0, exitCosts: 1.5,
+         capex: 0, leaseUpYrs: 0, entryVacancy: 4, refiYr: 0 },
+  },
+  retail: {
+    name: "Retail", rev: "Gross Passing Rent", vac: "Vacancy Allowance", opx: "Non-Recoverable OpEx",
+    // Retail park / high street: wider yields, modest growth
+    d: { grossRev: 800000, vacancy: 6, opexPct: 18, noiGrowth: 2, price: 10000000, acqCosts: 2,
+         ltv: 55, intRate: 4.75, amortYrs: 25, ioYrs: 1, hold: 5, exitCap: 6.25, exitCosts: 1.5,
+         capex: 0, leaseUpYrs: 0, entryVacancy: 6, refiYr: 0 },
+  },
+  student: {
+    name: "Student Housing / PBSA", rev: "Gross Rent Roll", vac: "Occupancy Discount", opx: "Operating & Mgmt Costs",
+    // PBSA: high rent/bed, near-full occupancy, operationally intensive
+    d: { grossRev: 1050000, vacancy: 3, opexPct: 32, noiGrowth: 3.5, price: 13000000, acqCosts: 2,
+         ltv: 60, intRate: 4.5, amortYrs: 30, ioYrs: 2, hold: 5, exitCap: 5.25, exitCosts: 1.5,
+         capex: 0, leaseUpYrs: 0, entryVacancy: 3, refiYr: 0 },
+  },
+  development: {
+    name: "Development / Forward-Funded", rev: "Stabilised Rent", vac: "Stabilised Void", opx: "Operating Expenses",
+    // Underwritten to a stabilised yield-on-cost: price = all-in cost,
+    // vacant on completion, NOI ramps over a 2-yr lease-up, IO during build
+    d: { grossRev: 1000000, vacancy: 5, opexPct: 15, noiGrowth: 3, price: 12000000, acqCosts: 2,
+         ltv: 55, intRate: 5.25, amortYrs: 25, ioYrs: 3, hold: 5, exitCap: 5.5, exitCosts: 1.5,
+         capex: 0, leaseUpYrs: 2, entryVacancy: 100, refiYr: 0 },
+  },
 };
+
+/* Keys an asset-class preset overwrites when the class is switched. */
+export const AC_PRESET_KEYS = [
+  "grossRev", "vacancy", "opexPct", "noiGrowth", "price", "acqCosts",
+  "ltv", "intRate", "amortYrs", "ioYrs", "hold", "exitCap", "exitCosts",
+  "capex", "leaseUpYrs", "entryVacancy", "refiYr",
+];
 
 /* ─── Default input values ────────────────────────────────── */
 export const DEF = {
