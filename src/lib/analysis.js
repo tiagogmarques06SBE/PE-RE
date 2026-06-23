@@ -40,13 +40,16 @@ export function computeAttribution(M, i) {
   const noiGrowthVal = entryCapF > 0 ? (noiExit - noiEntry) / entryCapF : 0;
   const capMoveVal = noiExit * (1 / exitCapF - (entryCapF > 0 ? 1 / entryCapF : 0));
 
+  // With a refinance, balExit reflects the re-levered balance, so this line captures
+  // the NET change in senior debt (amortisation less cash-out), not pure amortisation.
+  const hasRefi = refiProceeds !== 0;
   const items = [
     { key: "income",  label: "Operating Cash Flow", val: opIncome },
     { key: "noi",     label: "NOI Growth",           val: noiGrowthVal },
     { key: "cap",     label: "Cap Rate Movement",    val: capMoveVal },
-    { key: "paydown", label: "Debt Amortisation",    val: debtPaydown },
+    { key: "paydown", label: hasRefi ? "Net Senior Debt Change" : "Debt Amortisation", val: debtPaydown },
   ];
-  if (refiProceeds !== 0) items.splice(1, 0, { key: "refi", label: "Refinancing Proceeds", val: refiProceeds });
+  if (hasRefi) items.splice(1, 0, { key: "refi", label: "Refinancing Proceeds", val: refiProceeds });
   items.push({ key: "disposal", label: "Disposal Costs",        val: -disposal });
   items.push({ key: "acq",      label: "Acquisition Costs",     val: -acqCostsAmt });
   if (capex > 0) items.push({ key: "capex", label: "Capital Expenditure", val: -capex });

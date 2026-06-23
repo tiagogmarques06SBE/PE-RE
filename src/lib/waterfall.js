@@ -61,7 +61,7 @@ function allocateDistribution(dist, state, wf, lpCap, gpCap) {
 export function computeWaterfall(M, wf) {
   if (!M.valid) {
     return {
-      lpCap: 0, gpCap: 0,
+      lpCap: 0, gpCap: 0, lpCalled: 0, gpCalled: 0,
       lpROC: 0, gpROC: 0, lpPref: 0, gpCatchUp: 0,
       lpT1: 0, gpT1: 0, lpT2: 0, gpT2: 0,
       lpTotal: 0, gpTotal: 0, gpPromote: 0,
@@ -73,7 +73,10 @@ export function computeWaterfall(M, wf) {
   const { equity, rows, HP } = M;
   const hurdle = wf.hurdle / 100;
   const lpPct = wf.lpPct / 100, gpPct = wf.gpPct / 100;
-  const lpCap = equity * lpPct, gpCap = equity * gpPct;
+  // Capital is mutable: a year with a net cash shortfall is a capital call, which
+  // adds to each partner's contributed capital (split by commitment ratio).
+  let lpCap = equity * lpPct, gpCap = equity * gpPct;
+  let lpCalled = 0, gpCalled = 0;
 
   const state = {
     lpROC: 0, gpROC: 0,
@@ -92,15 +95,26 @@ export function computeWaterfall(M, wf) {
     state.lpHurdle *= (1 + hurdle);
 
     const row = rows[yr - 1];
-    // Note: negative CFADS (e.g. from heavy debt service in early years) are floored
-    // at zero here — capital calls are not modelled, so LP/GP IRRs may not reconcile
-    // to the deal IRR in high-leverage / low-yield scenarios.
-    let dist = Math.max(0, row.cfads);
-    if (yr === HP) dist += Math.max(0, row.exitEq);
+    // Net partner cash for the year = operating cash + refi proceeds (+ exit equity in
+    // the final year). This mirrors the deal-level levered cash flow exactly, so that
+    // LP + GP cash flows reconcile to the deal CF period-by-period.
+    const net = row.cfads + (row.cashOut || 0) + (yr === HP ? row.exitEq : 0);
 
-    const split = allocateDistribution(dist, state, wf, lpCap, gpCap);
-    lpCF.push(split.lp);
-    gpCF.push(split.gp);
+    if (net >= 0) {
+      const split = allocateDistribution(net, state, wf, lpCap, gpCap);
+      lpCF.push(split.lp);
+      gpCF.push(split.gp);
+    } else {
+      // Capital call: partners fund the shortfall pro-rata to commitment. The new
+      // capital lifts each partner's ROC target and the LP's outstanding-capital
+      // hurdle account (so it correctly accrues preferred return thereafter).
+      const lpCall = -net * lpPct, gpCall = -net * gpPct;
+      lpCap += lpCall; gpCap += gpCall;
+      lpCalled += lpCall; gpCalled += gpCall;
+      state.lpHurdle += lpCall;
+      lpCF.push(-lpCall);
+      gpCF.push(-gpCall);
+    }
   }
 
   const lpTotal = state.lpROC + state.lpPref + state.lpT1 + state.lpT2;
@@ -109,6 +123,7 @@ export function computeWaterfall(M, wf) {
 
   return {
     lpCap, gpCap,
+    lpCalled, gpCalled,
     lpROC: state.lpROC, gpROC: state.gpROC,
     lpPref: state.lpPref, gpCatchUp: state.gpCatchUp,
     lpT1: state.lpT1, gpT1: state.gpT1,
@@ -118,6 +133,7 @@ export function computeWaterfall(M, wf) {
     gpMoM: gpCap > 0 ? gpTotal / gpCap : 0,
     lpIRR: lpCap > 0 ? calcIRR(lpCF) * 100 : NaN,
     gpIRR: gpCap > 0 ? calcIRR(gpCF) * 100 : NaN,
+    lpCF, gpCF,
     valid: true,
   };
 }

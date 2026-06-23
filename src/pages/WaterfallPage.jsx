@@ -134,6 +134,11 @@ export default function WaterfallPage({ inp, M, wf, setWf, dark }) {
                 </div>
               ))}
             </div>
+            {W.lpCalled > 0 && (
+              <div style={{ fontSize: 9, opacity: 0.7, marginTop: 8 }}>
+                incl. {F.eur(W.lpCalled)} of capital called to fund interim shortfalls
+              </div>
+            )}
           </div>
           <div className="score-card gp">
             <div style={{ fontSize: 11, opacity: 0.75, marginBottom: 10 }}>GP — General Partner / Sponsor</div>

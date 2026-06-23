@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 
-import { DEF, WF_DEF, AC, PRESETS } from "./lib/config";
+import { DEF, WF_DEF, PRESETS } from "./lib/config";
 import { computeModel } from "./lib/model";
 import { readStateFromUrl, writeStateToUrl } from "./lib/url";
 import { BRAND, TABS } from "./constants";
@@ -92,8 +92,12 @@ export default function App() {
             title="Load a preset deal"
           >
             <option value="" disabled>Load example deal…</option>
-            {Object.entries(PRESETS).map(([k, p]) => (
-              <option key={k} value={k}>{p.label}</option>
+            {[...new Set(Object.values(PRESETS).map((p) => p.group))].map((g) => (
+              <optgroup key={g} label={g}>
+                {Object.entries(PRESETS)
+                  .filter(([, p]) => p.group === g)
+                  .map(([k, p]) => <option key={k} value={k}>{p.label}</option>)}
+              </optgroup>
             ))}
           </select>
           <input
@@ -110,14 +114,6 @@ export default function App() {
             placeholder="Prepared by"
             aria-label="Prepared by"
           />
-          <select
-            className="nav-select"
-            value={inp.assetClass}
-            onChange={(e) => setInp((p) => ({ ...p, assetClass: e.target.value }))}
-            aria-label="Asset class"
-          >
-            {Object.entries(AC).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}
-          </select>
           <button type="button" className={`btn btn-share${shareMsg ? " copied" : ""}`} onClick={handleShare}>
             {shareMsg || "Share deal"}
           </button>

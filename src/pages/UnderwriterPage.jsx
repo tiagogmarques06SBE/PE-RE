@@ -38,8 +38,9 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
     "Exit Equity": Math.round(d.exitEq),
   })), [M.rows, IO_r]);
 
-  const dscrSub = M.dscr1 != null
-    ? M.dscr1 < 1.2
+  // Lead with the minimum (lender's underwriting view), not flattering Year-1 IO coverage.
+  const dscrSub = M.minDSCR != null
+    ? M.minDSCR < 1.2
       ? { text: "Below 1.20× covenant", cls: "mcard-warn" }
       : { text: "Above 1.20× covenant", cls: "mcard-ok" }
     : null;
@@ -77,6 +78,14 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
           <NI id="amortYrs" label="Amortisation (years)" value={inp.amortYrs} onChange={num("amortYrs")} step="1" min="5" max="40" />
           <NI id="ioYrs" label="Interest Only (years)" value={inp.ioYrs} onChange={num("ioYrs")} step="1" min="0" max="10" />
           <div style={{ fontSize: 9, color: "#94a3b8" }}>IO-then-amortising uses full-term payment; residual balloon exits at hold-period end.</div>
+          {(inp.assetClass === "development" || (inp.capex > 0 && inp.leaseUpYrs > 0)) && (
+            <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 6, lineHeight: 1.5, borderTop: "1px solid var(--line)", paddingTop: 6 }}>
+              <strong>Simplification:</strong> debt is sized as LTV on stabilised value. A true
+              development / heavy-reposition deal would be sized <em>loan-to-cost</em> with phased
+              construction draws and interest during construction — materially changing the early
+              debt balance and interest drag.
+            </div>
+          )}
         </Sec>
 
         <Sec title="Exit">
@@ -162,6 +171,9 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
             <div>
               <div className="hero-eyebrow">{cfg.name} · {M.HP}-year hold · {inp.ltv}% LTV</div>
               <div className="hero-deal">{inp.dealName || "Untitled deal"}</div>
+              {cfg.thesis && (
+                <div style={{ fontSize: 11.5, color: "var(--on-folder-dim)", marginTop: 5, maxWidth: "58ch", lineHeight: 1.45 }}>{cfg.thesis}</div>
+              )}
             </div>
             <div className={`hero-verdict ${M.valid ? (M.noIRR ? "weak" : M.levIRR >= inp.targetIRR ? "good" : M.levIRR >= 0.66 * inp.targetIRR ? "ok" : "weak") : "weak"}`}>
               {M.valid
@@ -195,8 +207,8 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
           <MCard label="Cash-on-Cash (Year 1)" val={F.pct(M.coc)} sub="CFADS ÷ equity invested" />
           <MCard label="Entry Cap Rate" val={F.pct(M.capIn)}
             sub={`Exit cap ${F.pct(inp.exitCap)} · ${inp.exitCap > M.capIn ? "Cap expansion ↑" : "Cap compression ↓"}`} />
-          <MCard label={inp.mezzOn ? "Senior DSCR — Year 1" : "DSCR — Year 1"} val={F.mul(M.dscr1)}
-            sub={dscrSub ? `${dscrSub.text}${M.minDSCR != null ? ` · Min ${F.mul(M.minDSCR)} (Yr ${M.minDSCRYear})` : ""}` : "—"}
+          <MCard label={inp.mezzOn ? "Senior Min DSCR" : "Min DSCR"} val={F.mul(M.minDSCR)}
+            sub={dscrSub ? `${dscrSub.text}${M.minDSCRYear != null ? ` (Yr ${M.minDSCRYear})` : ""} · Yr 1 ${F.mul(M.dscr1)}${inp.ioYrs > 0 ? " (IO)" : ""}` : "—"}
             subClass={dscrSub?.cls} />
           <MCard label="Yield on Cost" val={M.yieldOnCost != null ? F.pct(M.yieldOnCost * 100) : "—"}
             sub={M.valueAddSpreadBps != null ? `${M.valueAddSpreadBps >= 0 ? "+" : ""}${M.valueAddSpreadBps.toFixed(0)} bps vs exit cap` : "—"} />
@@ -210,9 +222,9 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
               sub={`Senior ${inp.ltv}% + Mezz ${inp.mezzLtv}%`} />
             <MCard label="Blended Debt Rate" val={`${M.blendedDebtRate.toFixed(2)}%`}
               sub={`Senior ${inp.intRate}% · Mezz ${inp.mezzRate}%`} />
-            <MCard label="WL DSCR — Year 1" val={F.mul(M.rows[0]?.wholeLoanDSCR)}
-              sub={(() => { const v = M.rows[0]?.wholeLoanDSCR; return v == null ? "—" : v < 1.0 ? "Below 1.0× — covenant breach" : v < 1.2 ? "Thin cushion" : M.minWholeLoanDSCR != null ? `Min ${F.mul(M.minWholeLoanDSCR)} over hold` : "—"; })()}
-              subClass={(() => { const v = M.rows[0]?.wholeLoanDSCR; return v != null && v < 1.2 ? "mcard-warn" : "mcard-ok"; })()} />
+            <MCard label="WL Min DSCR" val={F.mul(M.minWholeLoanDSCR)}
+              sub={(() => { const v = M.minWholeLoanDSCR; if (v == null) return "—"; const lead = v < 1.0 ? "Below 1.0× — covenant breach" : v < 1.2 ? "Thin cushion" : "Covenant headroom"; return `${lead} · Yr 1 ${F.mul(M.rows[0]?.wholeLoanDSCR)}`; })()}
+              subClass={(() => { const v = M.minWholeLoanDSCR; return v != null && v < 1.2 ? "mcard-warn" : "mcard-ok"; })()} />
             <MCard label="Mezzanine Loan" val={F.eur(M.mezzLoan)}
               sub={inp.mezzPik ? "PIK — accrues to exit" : "Cash-pay — IO bullet"} />
           </div>

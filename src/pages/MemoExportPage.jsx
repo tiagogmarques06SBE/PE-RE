@@ -387,8 +387,8 @@ export default function MemoExportPage({ inp, M, dark }) {
                   <TR label="Loan amount"      val={`${F.eur(M.loan)} (${p1(inp.ltv)}% LTV)`} />
                   <TR label="Rate / IO / amort" val={`${p2(inp.intRate)} / ${inp.ioYrs}yr IO / ${inp.amortYrs}yr`} />
                   {M.debtYield != null && <TR label="Debt yield" val={p2(M.debtYield * 100)} />}
-                  <TR label="DSCR, Year 1"     val={F.mul(M.dscr1)} />
                   {M.minDSCR != null && <TR label="Min senior DSCR" val={`${F.mul(M.minDSCR)} (Year ${M.minDSCRYear})`} />}
+                  <TR label={`DSCR, Year 1${inp.ioYrs > 0 ? " (IO)" : ""}`} val={F.mul(M.dscr1)} />
                   {inp.mezzOn && M.mezzLoan > 0 && <>
                     <TG label="Mezzanine" />
                     <TR label="Loan amount"    val={`${F.eur(M.mezzLoan)} (${p1(inp.mezzLtv)}% LTV)`} />
