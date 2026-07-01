@@ -35,7 +35,7 @@ const entry = `
   export { calcIRR, pmt } from "./src/lib/irr.js";
   export { computeModel, buildLeveredCFs, validateInputs } from "./src/lib/model.js";
   export { computeWaterfall } from "./src/lib/waterfall.js";
-  export { computeAttribution, computeIrrByExitYear, computeBreakeven, computeScenarios } from "./src/lib/analysis.js";
+  export { computeAttribution, computeIrrByExitYear, computeBreakeven, computeScenarios, computeEquityPayback } from "./src/lib/analysis.js";
   export { computeSourcesUses } from "./src/lib/sources.js";
   export { buildSens2 } from "./src/lib/sensitivity.js";
   export { encodeAppState, decodeAppState } from "./src/lib/url.js";
@@ -53,7 +53,8 @@ rmSync(tmp);
 const {
   calcIRR, pmt, computeModel, buildLeveredCFs, computeWaterfall,
   computeAttribution, computeIrrByExitYear, computeSourcesUses,
-  buildSens2, encodeAppState, decodeAppState, PRESETS, DEF, WF_DEF,
+  computeEquityPayback, buildSens2, encodeAppState, decodeAppState,
+  PRESETS, DEF, WF_DEF,
 } = M;
 
 const near = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}: |${a} - ${b}| > ${tol}`);
@@ -195,6 +196,31 @@ for (const key of ["office", "valueAdd", "opportunistic"]) {
     near(last.irr, m.levIRR, 0.05, "curve end = deal IRR");
   });
 }
+
+// ── 5b. Equity payback (J-curve) ─────────────────────────────────────────────
+test("payback: curve starts at −equity and ends at net profit", () => {
+  for (const key of ["office", "core", "opportunistic"]) {
+    const m = computeModel(PRESETS[key].inp);
+    const p = computeEquityPayback(m);
+    near(p.points[0].cum, -m.equity, 0.01, `${key}: starts at −equity`);
+    near(p.points[p.points.length - 1].cum, m.totalDist - m.equity, 1, `${key}: ends at profit`);
+  }
+});
+
+test("payback: office deal returns capital at exit; refi deal no later than hold", () => {
+  const office = computeEquityPayback(computeModel(DEF));
+  assert.equal(office.paybackYear, computeModel(DEF).HP, "no-refi deal pays back at exit");
+  const oppModel = computeModel(PRESETS.opportunistic.inp);
+  const opp = computeEquityPayback(oppModel);
+  assert.ok(opp.paybackYear != null && opp.paybackYear <= oppModel.HP, "refi deal pays back within hold");
+});
+
+test("payback: loss-making deal never pays back (null, not a crash)", () => {
+  const m = computeModel(MODES["capital-call stress"]);
+  const p = computeEquityPayback(m);
+  assert.equal(p.paybackYear, null, "no payback year");
+  assert.ok(p.trough <= -m.equity, "trough at least as deep as initial equity");
+});
 
 // ── 6. Edge cases ─────────────────────────────────────────────────────────────
 test("zero leverage: levered equals unlevered", () => {

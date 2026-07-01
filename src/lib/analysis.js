@@ -78,6 +78,29 @@ function solveCrossing(fn, lo, hi, target, steps = 240) {
   return null;
 }
 
+/**
+ * Equity payback (J-curve): cumulative net cash flow to equity by year.
+ * Year 0 starts at −equity; each year adds that year's levered cash flow
+ * (capital calls arrive as negative years and deepen the curve). The payback
+ * year is the first year the running total reaches zero — "when is the
+ * capital fully returned?" — null if it never is within the hold.
+ */
+export function computeEquityPayback(M) {
+  if (!M.valid || !M.levCF?.length) return { valid: false, points: [], paybackYear: null, trough: 0, troughYear: 0 };
+
+  let cum = 0;
+  const points = M.levCF.map((cf, year) => {
+    cum += cf;
+    return { year, cf, cum };
+  });
+
+  const paybackYear = points.find((p) => p.year > 0 && p.cum >= 0)?.year ?? null;
+  const trough = points.reduce((m, p) => Math.min(m, p.cum), 0);
+  const troughYear = points.find((p) => p.cum === trough)?.year ?? 0;
+
+  return { valid: true, points, paybackYear, trough, troughYear };
+}
+
 export function computeIrrByExitYear(inp) {
   const HP = Math.max(1, Math.round(inp.hold));
   const results = [];

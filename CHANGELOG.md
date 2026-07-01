@@ -116,6 +116,21 @@ devDependency, bundles the Vite-style imports). Coverage of the model layer:
 
 `npm run verify` remains as a quick reconciliation smoke-check.
 
+## Equity Payback view (Analysis tab)
+
+**What:** a J-curve chart of cumulative net cash flow to equity — from −equity at close to net
+profit at exit — with three tiles: the year capital is fully returned, peak equity outstanding,
+and net profit. Computed in `computeEquityPayback` (`src/lib/analysis.js`) directly from the
+deal's levered cash-flow vector; no new financial logic.
+
+**Why:** "when do I get my money back?" is the first question at any IC. The curve also makes
+two existing behaviours visible: capital calls deepen the trough, and a refinance pulls cash
+forward (the Opportunistic preset jumps from −€2.7M to −€0.8M at the Year-2 refi).
+
+**Interview note:** payback complements IRR/MoM — a deal can have a strong IRR yet leave capital
+outstanding until the final day (most single-asset deals pay back only at exit; that IS the
+J-curve). Three tests pin the curve's endpoints, the payback year, and the never-pays-back case.
+
 ## Considered and deliberately not done
 
 - **TypeScript migration** — the suite + JSDoc typedefs give most of the safety; a language

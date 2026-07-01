@@ -3,10 +3,12 @@ import { useMemo } from "react";
 import AttributionWaterfall from "../components/charts/AttributionWaterfall";
 import ExitBridgeChart from "../components/charts/ExitBridgeChart";
 import IrrByExitYear from "../components/charts/IrrByExitYear";
+import PaybackCurve from "../components/charts/PaybackCurve";
 import TornadoChart from "../components/charts/TornadoChart";
 import InvalidPanel from "../components/ui/InvalidPanel";
 import {
-  computeAttribution, computeScenarios, computeBreakeven, computeTornado, SCENARIOS,
+  computeAttribution, computeScenarios, computeBreakeven, computeTornado,
+  computeEquityPayback, SCENARIOS,
 } from "../lib/analysis";
 import { F } from "../lib/formatters";
 
@@ -15,6 +17,7 @@ export default function AnalysisPage({ inp, M, wf }) {
   const scenarios = useMemo(() => computeScenarios(inp), [inp]);
   const BE       = useMemo(() => computeBreakeven(inp, wf?.hurdle), [inp, wf]);
   const tornado  = useMemo(() => computeTornado(inp), [inp]);
+  const payback  = useMemo(() => computeEquityPayback(M), [M]);
 
   if (!M.valid) {
     return <InvalidPanel message="Adjust inputs in the Underwriting tab to generate the analysis." />;
@@ -44,6 +47,41 @@ export default function AnalysisPage({ inp, M, wf }) {
           <div className="attr-tile attr-profit">
             <div className="attr-label">Equity Profit</div>
             <div className="attr-val">{F.eur(A.profit)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title">Equity Payback</div>
+        <div className="card-sub">
+          Cumulative net cash flow to equity, from the {F.eur(M.equity)} invested at close to the
+          {" "}{F.eur(M.totalDist - M.equity)} of profit at exit —{" "}
+          {payback.paybackYear != null
+            ? <>capital is fully returned by <strong>end of Year {payback.paybackYear}</strong>.</>
+            : <>capital is <strong>not fully returned</strong> within the hold.</>}
+        </div>
+        <PaybackCurve payback={payback} />
+        <div className="attr-grid">
+          <div className="attr-tile">
+            <div className="attr-label">Capital returned</div>
+            <div className="attr-val" style={{ color: payback.paybackYear != null ? "var(--green)" : "var(--oxblood)" }}>
+              {payback.paybackYear != null ? `Year ${payback.paybackYear}` : "Not in hold"}
+            </div>
+          </div>
+          <div className="attr-tile">
+            <div className="attr-label">Peak equity outstanding</div>
+            <div className="attr-val">
+              {F.eur(-payback.trough)}
+              <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 400 }}>
+                {" "}{payback.troughYear === 0 ? "at close" : `Yr ${payback.troughYear}`}
+              </span>
+            </div>
+          </div>
+          <div className="attr-tile">
+            <div className="attr-label">Net profit at exit</div>
+            <div className="attr-val" style={{ color: M.totalDist - M.equity >= 0 ? "var(--green)" : "var(--oxblood)" }}>
+              {F.eur(M.totalDist - M.equity)}
+            </div>
           </div>
         </div>
       </div>
