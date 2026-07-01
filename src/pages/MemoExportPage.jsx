@@ -29,7 +29,7 @@ function attrV(items, key) {
   return items?.find(i => i.key === key)?.val ?? 0;
 }
 
-export default function MemoExportPage({ inp, M, dark }) {
+export default function MemoExportPage({ inp, M }) {
   const A  = useMemo(() => computeAttribution(M, inp), [M, inp]);
   const BE = useMemo(() => computeBreakeven(inp),       [inp]);
 
@@ -38,11 +38,11 @@ export default function MemoExportPage({ inp, M, dark }) {
   const strategy = classify(inp.targetIRR);
   const prepBy   = inp.preparedBy || "Investments Team";
 
-  const bg     = dark ? "#111827" : "#ffffff";
-  const border = dark ? "#374151" : "#d1d5db";
-  const ink    = dark ? "#f1f5f9" : "#111827";
-  const muted  = dark ? "#6b7280" : "#64748b";
-  const faint  = dark ? "#1e293b" : "#f8fafc";
+  const bg     = "#ffffff";
+  const border = "#d1d5db";
+  const ink    = "#111827";
+  const muted  = "#64748b";
+  const faint  = "#f8fafc";
 
   const secH = {
     fontSize: 11, fontWeight: 700, color: ink, fontFamily: SANS,

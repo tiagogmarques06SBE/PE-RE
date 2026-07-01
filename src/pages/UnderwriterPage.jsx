@@ -12,7 +12,7 @@ import { PAL } from "../constants";
 import { AC } from "../lib/config";
 import { buildSens2, irrS } from "../lib/sensitivity";
 
-export default function UnderwriterPage({ inp, setInp, M, dark }) {
+export default function UnderwriterPage({ inp, setInp, M }) {
   const cfg = AC[inp.assetClass] || AC.office;
   const HP_r = M.HP, IO_r = M.IO;
   const num = (k) => (v) => setInp((p) => ({ ...p, [k]: v }));
@@ -20,13 +20,11 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
   const [sensCol, setSensCol] = useState("price");
   const [methOpen, setMethOpen] = useState(false);
 
-  const tk = dark ? "#94a3b8" : "#64748b";
-  const gk = dark ? "#334155" : "#e2e8f0";
-  const tt = dark
-    ? { background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9", fontSize: 10 }
-    : { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 10 };
-  const exitRowBg  = dark ? "#022c22" : "#f0fdf4";
-  const totalRowBg = dark ? "#1e293b" : "#f1f5f9";
+  const tk = "#64748b";
+  const gk = "#e2e8f0";
+  const tt = { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 10 };
+  const exitRowBg  = "#f0fdf4";
+  const totalRowBg = "#f1f5f9";
 
   const SENS = useMemo(() => buildSens2(inp, M.noi, sensCol), [inp, M.noi, sensCol]);
 
@@ -166,7 +164,6 @@ export default function UnderwriterPage({ inp, setInp, M, dark }) {
         )}
 
         <div className="hero">
-          <div className="hero-glow" aria-hidden="true" />
           <div className="hero-head">
             <div>
               <div className="hero-eyebrow">{cfg.name} · {M.HP}-year hold · {inp.ltv}% LTV</div>

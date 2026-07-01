@@ -26,15 +26,6 @@ export default function App() {
 
   const M = useMemo(() => computeModel(inp), [inp]);
 
-  const [dark, setDark] = useState(() => {
-    try { return localStorage.getItem("re-theme") === "dark"; } catch { return false; }
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-    try { localStorage.setItem("re-theme", dark ? "dark" : "light"); } catch {}
-  }, [dark]);
-
   useEffect(() => {
     const t = setTimeout(() => writeStateToUrl({ inp, wf, tab }), 300);
     return () => clearTimeout(t);
@@ -118,19 +109,16 @@ export default function App() {
             {shareMsg || "Share deal"}
           </button>
           <button type="button" className="btn" onClick={handleReset}>Reset</button>
-          <button type="button" className="btn btn-icon" onClick={() => setDark((d) => !d)} aria-label="Toggle dark mode" title={dark ? "Light mode" : "Dark mode"}>
-            {dark ? "☀" : "☾"}
-          </button>
         </div>
       </header>
 
       <ErrorBanner errors={M.errors} />
 
       <main className="page-content">
-        {tab === "underwriter" && <UnderwriterPage inp={inp} setInp={setInp} M={M} dark={dark} />}
-        {tab === "analysis"    && <AnalysisPage    inp={inp} M={M} wf={wf} dark={dark} />}
-        {tab === "waterfall"   && <WaterfallPage   inp={inp} M={M} wf={wf} setWf={setWf} dark={dark} />}
-        {tab === "memo"        && <MemoExportPage  inp={inp} M={M} dark={dark} />}
+        {tab === "underwriter" && <UnderwriterPage inp={inp} setInp={setInp} M={M} />}
+        {tab === "analysis"    && <AnalysisPage    inp={inp} M={M} wf={wf} />}
+        {tab === "waterfall"   && <WaterfallPage   inp={inp} M={M} wf={wf} setWf={setWf} />}
+        {tab === "memo"        && <MemoExportPage  inp={inp} M={M} />}
       </main>
 
       <footer className="brand-footer no-print">

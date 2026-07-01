@@ -10,18 +10,16 @@ import { computeWaterfall } from "../lib/waterfall";
 import { F } from "../lib/formatters";
 import { PAL } from "../constants";
 
-export default function WaterfallPage({ inp, M, wf, setWf, dark }) {
+export default function WaterfallPage({ inp, M, wf, setWf }) {
   const W = useMemo(() => computeWaterfall(M, wf), [M, wf]);
   const nW = (k) => (v) => setWf((p) => ({ ...p, [k]: v }));
 
-  const tk = dark ? "#94a3b8" : "#64748b";
-  const gk = dark ? "#334155" : "#e2e8f0";
-  const tt = dark
-    ? { background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9", fontSize: 10 }
-    : { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 10 };
-  const totalRowBg = dark ? "#1e293b" : "#f1f5f9";
-  const tblHeadBg  = dark ? "#1e293b" : "#f1f5f9";
-  const infoBoxBg  = dark ? "#1e293b" : "#f1f5f9";
+  const tk = "#64748b";
+  const gk = "#e2e8f0";
+  const tt = { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 10 };
+  const totalRowBg = "#f1f5f9";
+  const tblHeadBg  = "#f1f5f9";
+  const infoBoxBg  = "#f1f5f9";
 
   const TIER_COLOURS = [PAL.greenDeep, PAL.green, PAL.brass, PAL.sage, PAL.slate];
 

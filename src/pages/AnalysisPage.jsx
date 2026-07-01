@@ -10,7 +10,7 @@ import {
 } from "../lib/analysis";
 import { F } from "../lib/formatters";
 
-export default function AnalysisPage({ inp, M, wf, dark }) {
+export default function AnalysisPage({ inp, M, wf }) {
   const A        = useMemo(() => computeAttribution(M, inp), [M, inp]);
   const scenarios = useMemo(() => computeScenarios(inp), [inp]);
   const BE       = useMemo(() => computeBreakeven(inp, wf?.hurdle), [inp, wf]);
@@ -36,7 +36,7 @@ export default function AnalysisPage({ inp, M, wf, dark }) {
           Where the <strong>{F.eur(A.profit)}</strong> of equity profit comes from. Each driver adds up
           to total distributions less the equity invested.
         </div>
-        <AttributionWaterfall items={A.items} dark={dark} />
+        <AttributionWaterfall items={A.items} />
         <div className="attr-grid">
           {A.items.map((it) => (
             <div key={it.key} className="attr-tile">
@@ -68,7 +68,7 @@ export default function AnalysisPage({ inp, M, wf, dark }) {
           Levered IRR if the asset were sold in each year of the hold — shows the
           optimal exit window vs the planned {inp.hold}-year hold.
         </div>
-        <IrrByExitYear inp={inp} dark={dark} />
+        <IrrByExitYear inp={inp} />
       </div>
 
       <div className="card">
@@ -77,7 +77,7 @@ export default function AnalysisPage({ inp, M, wf, dark }) {
           How the gross sale value flows to equity investors after costs, senior repayment
           {inp.mezzOn ? ", and mezzanine repayment" : ""}.
         </div>
-        <ExitBridgeChart M={M} inp={inp} dark={dark} />
+        <ExitBridgeChart M={M} inp={inp} />
       </div>
 
       <div className="two-col-equal">

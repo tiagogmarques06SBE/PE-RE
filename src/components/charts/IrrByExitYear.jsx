@@ -7,14 +7,12 @@ import { computeIrrByExitYear } from "../../lib/analysis";
 import { F } from "../../lib/formatters";
 import { PAL } from "../../constants";
 
-export default function IrrByExitYear({ inp, dark }) {
+export default function IrrByExitYear({ inp }) {
   const data = useMemo(() => computeIrrByExitYear(inp), [inp]);
 
-  const tk = dark ? "#94a3b8" : "#64748b";
-  const gk = dark ? "#334155" : "#e2e8f0";
-  const tt = dark
-    ? { background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9", fontSize: 11 }
-    : { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 11 };
+  const tk = "#64748b";
+  const gk = "#e2e8f0";
+  const tt = { background: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 11 };
 
   if (!data.length) return null;
 
