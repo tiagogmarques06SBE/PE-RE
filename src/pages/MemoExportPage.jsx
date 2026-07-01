@@ -212,9 +212,6 @@ export default function MemoExportPage({ inp, M }) {
         `${inp.mezzPik ? "PIK" : "cash-pay"}) brings whole-loan LTV to ${p1(M.wholeLoanLTV)}% ` +
         `and blended cost to ${p2(M.blendedDebtRate)}.`
       );
-      if (M.minWholeLoanDSCR != null) {
-        parts.push(`Whole-loan DSCR troughs at ${F.mul(M.minWholeLoanDSCR)}.`);
-      }
     }
     if (inp.refiYr > 0 && M.refiEvent) {
       const { newLoan, cashOut } = M.refiEvent;
@@ -254,9 +251,7 @@ export default function MemoExportPage({ inp, M }) {
   }
 
   if (inp.ltv >= 65 || inp.mezzOn || inp.refiYr > 0) {
-    let finRisk = `Senior DSCR troughs at ${F.mul(M.minDSCR)} in Year ${M.minDSCRYear}`;
-    if (inp.mezzOn && M.minWholeLoanDSCR != null) finRisk += `; whole-loan DSCR troughs at ${F.mul(M.minWholeLoanDSCR)}`;
-    finRisk += ".";
+    let finRisk = `Senior DSCR troughs at ${F.mul(M.minDSCR)} in Year ${M.minDSCRYear}.`;
     if (inp.refiYr > 0) finRisk += ` The Year-${inp.refiYr} refinancing carries execution risk if credit markets deteriorate.`;
     risks.push({
       label: "Financing and coverage",
@@ -395,7 +390,6 @@ export default function MemoExportPage({ inp, M }) {
                     <TR label="Rate / type"    val={`${p2(inp.mezzRate)} / ${inp.mezzPik ? "PIK" : "cash-pay"}`} />
                     <TR label="Blended cost"   val={p2(M.blendedDebtRate)} />
                     <TR label="Whole-loan LTV" val={p1(M.wholeLoanLTV)} />
-                    {M.minWholeLoanDSCR != null && <TR label="Min WL DSCR" val={F.mul(M.minWholeLoanDSCR)} />}
                   </>}
                 </tbody>
               </table>

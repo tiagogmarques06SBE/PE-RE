@@ -208,12 +208,12 @@ export default function UnderwriterPage({ inp, setInp, M }) {
           <MCard label="Entry Cap Rate" val={F.pct(M.capIn)}
             sub={`Exit cap ${F.pct(inp.exitCap)} · ${inp.exitCap > M.capIn ? "Cap expansion ↑" : "Cap compression ↓"}`} />
           <MCard label={inp.mezzOn ? "Senior Min DSCR" : "Min DSCR"} val={F.mul(M.minDSCR)}
-            sub={dscrSub ? `${dscrSub.text}${M.minDSCRYear != null ? ` (Yr ${M.minDSCRYear})` : ""} · Yr 1 ${F.mul(M.dscr1)}${inp.ioYrs > 0 ? " (IO)" : ""}` : "—"}
+            sub={dscrSub ? `NOI ÷ debt service · ${dscrSub.text}${M.minDSCRYear != null ? ` (Year ${M.minDSCRYear})` : ""}` : "—"}
             subClass={dscrSub?.cls} />
           <MCard label="Yield on Cost" val={M.yieldOnCost != null ? F.pct(M.yieldOnCost * 100) : "—"}
             sub={M.valueAddSpreadBps != null ? `${M.valueAddSpreadBps >= 0 ? "+" : ""}${M.valueAddSpreadBps.toFixed(0)} bps vs exit cap` : "—"} />
           <MCard label="Debt Yield" val={M.debtYield != null ? F.pct(M.debtYield * 100) : "—"}
-            sub={inp.mezzOn && M.wholeLoanDebtYield != null ? `Whole-loan ${F.pct(M.wholeLoanDebtYield * 100)}` : "NOI ÷ loan — lender metric"} />
+            sub="NOI ÷ loan — lender metric" />
         </div>
 
         {inp.mezzOn && M.valid && (
@@ -222,9 +222,6 @@ export default function UnderwriterPage({ inp, setInp, M }) {
               sub={`Senior ${inp.ltv}% + Mezz ${inp.mezzLtv}%`} />
             <MCard label="Blended Debt Rate" val={`${M.blendedDebtRate.toFixed(2)}%`}
               sub={`Senior ${inp.intRate}% · Mezz ${inp.mezzRate}%`} />
-            <MCard label="WL Min DSCR" val={F.mul(M.minWholeLoanDSCR)}
-              sub={(() => { const t = dscrTier(M.minWholeLoanDSCR); if (!t) return "—"; return `${t.text} · Yr 1 ${F.mul(M.rows[0]?.wholeLoanDSCR)}${inp.mezzPik ? " (cash DS only — PIK accrues)" : ""}`; })()}
-              subClass={dscrTier(M.minWholeLoanDSCR)?.cls} />
             <MCard label="Mezzanine Loan" val={F.eur(M.mezzLoan)}
               sub={inp.mezzPik ? "PIK — accrues to exit" : "Cash-pay — IO bullet"} />
           </div>
