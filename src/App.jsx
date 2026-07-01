@@ -61,7 +61,7 @@ export default function App() {
     <div className="app-shell">
       <header className="top-nav no-print">
         <div className="top-nav-brand">
-          <div className="top-nav-brand-title">Praça</div>
+          <div className="top-nav-brand-title">Manteiga</div>
           <div style={{ fontSize: 10, color: "var(--on-folder-dim)", marginBottom: 1 }}>Real Estate Underwriting</div>
           <a className="top-nav-brand-link" href={BRAND.url} target="_blank" rel="noopener noreferrer">
             {BRAND.tagline}

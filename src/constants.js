@@ -1,5 +1,5 @@
 export const BRAND = {
-  product: "Praça",
+  product: "Manteiga",
   name: "Tiago Marques",
   url: "https://pere-tiago-marques.netlify.app",
   tagline: "Built by Tiago Marques · Nova SBE",
