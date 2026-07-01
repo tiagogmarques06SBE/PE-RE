@@ -659,10 +659,17 @@ a:hover { text-decoration: underline; }
 
 /* ─── Print (memo → PDF) ──────────────────────────────────── */
 @media print {
+  /* Zero page margins suppress the browser's own header/footer (URL, date,
+     page title) — it prints those in the margin area. The memo supplies its
+     own breathing room instead. */
+  @page { size: A4; margin: 0; }
   body { background: #fff; }
   .no-print { display: none !important; }
   .page-content { padding: 0; max-width: none; }
   .memo-preview-wrap { padding: 0; }
-  .memo-doc { box-shadow: none; border: none; border-radius: 0; max-width: none; }
+  .memo-doc {
+    box-shadow: none; border: none; border-radius: 0; max-width: none;
+    padding: 10mm 6mm;
+  }
   .card, .mcard { box-shadow: none; }
 }

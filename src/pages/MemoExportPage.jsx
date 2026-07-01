@@ -477,9 +477,8 @@ export default function MemoExportPage({ inp, M }) {
               <span style={{ fontSize: 8.5, color: muted, fontFamily: SANS, lineHeight: 1.6, maxWidth: 460 }}>
                 This document is private and confidential. Prepared for illustrative purposes only; it does not constitute an offer or advice. All figures are model outputs based on stated assumptions. Past performance is not indicative of future results.
               </span>
-              <span style={{ fontSize: 8.5, color: muted, fontFamily: SANS, textAlign: "right", flexShrink: 0, lineHeight: 1.6 }}>
-                <a href={BRAND.url} style={{ color: muted, textDecoration: "none", fontWeight: 600 }}>{BRAND.name}</a>
-                <span style={{ display: "block" }}>Exit = fwd NOI ÷ cap rate · IRR: Newton-Raphson</span>
+              <span style={{ fontSize: 8.5, color: muted, fontFamily: SANS, textAlign: "right", flexShrink: 0, lineHeight: 1.6, fontWeight: 600 }}>
+                {BRAND.name}
               </span>
             </div>
           </div>
