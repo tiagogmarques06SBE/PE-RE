@@ -1,24 +1,6 @@
 import { calcIRR } from "./irr";
 import { buildLeveredCFs } from "./model";
 
-export function buildSens(inp, noi, capsArr, ltvsArr) {
-  const b = inp.exitCap;
-  const caps = capsArr || [b - 1.5, b - 1, b - 0.5, b, b + 0.5, b + 1];
-  const ltvs = ltvsArr || [40, 50, 55, 60, 65, 70];
-
-  const grid = caps.map((ec) =>
-    ltvs.map((lv) => {
-      const scenario = { ...inp, ltv: lv, exitCap: ec };
-      const built = buildLeveredCFs(scenario, noi);
-      if (built.equity <= 0) return null;
-      const irr = calcIRR(built.levCF) * 100;
-      return isFinite(irr) ? irr : null;
-    })
-  );
-
-  return { caps, ltvs, grid };
-}
-
 export function buildSens2(inp, noi, colVar = "ltv") {
   const b = inp.exitCap;
   const caps = [b - 1.5, b - 1, b - 0.5, b, b + 0.5, b + 1];
@@ -37,8 +19,13 @@ export function buildSens2(inp, noi, colVar = "ltv") {
     colKey = "noiGrowth";
     currentCol = inp.noiGrowth;
   } else {
+    // Include the deal's actual LTV so the base case always has a highlighted
+    // column, even when it sits off the standard grid (e.g. 63%).
     cols = [40, 50, 55, 60, 65, 70];
-    colLabels = cols.map((v) => `${v}%`);
+    if (!cols.some((v) => Math.abs(v - inp.ltv) < 1e-6)) {
+      cols = [...cols, inp.ltv].sort((a, b2) => a - b2);
+    }
+    colLabels = cols.map((v) => `${+v.toFixed(1)}%`);
     colKey = "ltv";
     currentCol = inp.ltv;
   }
@@ -57,7 +44,7 @@ export function buildSens2(inp, noi, colVar = "ltv") {
 }
 
 export function irrS(v) {
-  if (v == null || !isFinite(v)) return { background: "#f1f5f9", color: "#94a3b8" };
+  if (v == null || !isFinite(v)) return { background: "#f1f5f9", color: "#64748b" };
   if (v < 0)  return { background: "#be123c", color: "#fff" };
   if (v < 4)  return { background: "#fecaca", color: "#7f1d1d" };
   if (v < 8)  return { background: "#f87171", color: "#fff" };

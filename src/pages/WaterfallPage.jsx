@@ -45,12 +45,7 @@ export default function WaterfallPage({ inp, M, wf, setWf }) {
   ];
 
   if (!M.valid) {
-    return (
-      <div className="page-layout">
-        <aside className="sidebar" />
-        <InvalidPanel />
-      </div>
-    );
+    return <InvalidPanel message="Adjust inputs in the Underwriting tab to compute the LP/GP waterfall." />;
   }
 
   return (
@@ -71,21 +66,21 @@ export default function WaterfallPage({ inp, M, wf, setWf }) {
           <NI id="gpPct" label="GP Commitment (%)" value={wf.gpPct}
             onChange={(v) => setWf((p) => ({ ...p, gpPct: v, lpPct: +(100 - v).toFixed(1) }))}
             sfx="%" step="5" min="0" max="100" />
-          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>
             LP capital: {F.eur(W.lpCap)} · GP capital: {F.eur(W.gpCap)}
           </div>
         </Sec>
 
         <Sec title="Preferred Return">
           <NI id="hurdle" label="IRR Hurdle (p.a.)" value={wf.hurdle} onChange={nW("hurdle")} sfx="%" step="0.5" min="0" max="20" />
-          <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 8, lineHeight: 1.5 }}>
             True IRR hurdle: pref accrues on outstanding capital only, so early distributions reduce the pref owed — matching LP/GP IRR reconciliation.
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <span style={{ fontSize: 10, color: "#475569" }}>GP Catch-Up</span>
             <button type="button" className="btn" aria-pressed={wf.catchUp}
               onClick={() => setWf((p) => ({ ...p, catchUp: !p.catchUp }))}
-              style={{ background: wf.catchUp ? PAL.green : "#e2e8f0", color: wf.catchUp ? "#fff" : "#94a3b8", border: "none", borderRadius: 12, padding: "3px 12px", fontWeight: 600 }}>
+              style={{ background: wf.catchUp ? PAL.green : "#e2e8f0", color: wf.catchUp ? "#fff" : "#64748b", border: "none", borderRadius: 12, padding: "3px 12px", fontWeight: 600 }}>
               {wf.catchUp ? "ON" : "OFF"}
             </button>
           </div>
@@ -153,13 +148,18 @@ export default function WaterfallPage({ inp, M, wf, setWf }) {
               <span style={{ fontSize: 10, opacity: 0.7 }}>Promote earned: </span>
               <span className="num" style={{ fontSize: 17, fontWeight: 500 }}>{F.eur(W.gpPromote)}</span>
             </div>
+            {W.gpCalled > 0 && (
+              <div style={{ fontSize: 9, opacity: 0.7, marginTop: 8 }}>
+                incl. {F.eur(W.gpCalled)} of capital called to fund interim shortfalls
+              </div>
+            )}
           </div>
         </div>
 
         <div className="two-col-equal">
           <div className="card" style={{ marginBottom: 0 }}>
             <div className="card-title" style={{ fontSize: 12 }}>Distribution Waterfall</div>
-            <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 10 }}>LP (left) vs GP (right) — stacked by tier</div>
+            <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 10 }}>LP (left) vs GP (right) — stacked by tier</div>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={chartData} margin={{ top: 0, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gk} />
@@ -182,7 +182,7 @@ export default function WaterfallPage({ inp, M, wf, setWf }) {
                 <thead>
                   <tr style={{ background: tblHeadBg }}>
                     {["Tier", "LP", "GP", "LP %", "GP %"].map((h) => (
-                      <th key={h} style={{ textAlign: h === "Tier" ? "left" : "right" }}>{h}</th>
+                      <th key={h} scope="col" style={{ textAlign: h === "Tier" ? "left" : "right" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -223,9 +223,9 @@ export default function WaterfallPage({ inp, M, wf, setWf }) {
                 of total distributions — at <strong>{F.pct(W.gpIRR)}</strong> IRR vs{" "}
                 <strong>{F.pct(W.lpIRR)}</strong> for the LP.
                 The <strong>{F.eur(W.gpPromote)}</strong> promote is earned through
-                performance above the {wf.hurdle}% IRR hurdle. Negative interim cash
-                flows are not modelled as capital calls — LP/GP IRRs may diverge from
-                deal IRR in early-negative-CFADS scenarios.
+                performance above the {wf.hurdle}% IRR hurdle. Years with a net cash
+                shortfall are funded as pro-rata capital calls, so LP and GP cash flows
+                reconcile to the deal-level levered cash flow in every scenario.
               </div>
             </div>
           </div>

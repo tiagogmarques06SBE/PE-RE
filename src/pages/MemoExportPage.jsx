@@ -277,7 +277,7 @@ export default function MemoExportPage({ inp, M }) {
 
   risks.push({
     label: "Liquidity and hold extension",
-    text: `Office investment volumes are sensitive to interest-rate cycles. Inability to sell at ${p2(inp.exitCap)}% in Year ${M.HP} would either extend the hold or reduce net proceeds.`,
+    text: `${assetLbl} investment volumes are sensitive to interest-rate cycles. Inability to sell at ${p2(inp.exitCap)}% in Year ${M.HP} would either extend the hold or reduce net proceeds.`,
     mitigant: BE.maxPriceTarget != null
       ? `The maximum entry price consistent with the ${p1(inp.targetIRR)}% target return is ${F.eur(BE.maxPriceTarget)}, versus an acquisition at ${F.eur(inp.price)}.`
       : "Break-even analysis available in the Analysis tab.",

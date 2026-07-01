@@ -37,11 +37,12 @@ export default function UnderwriterPage({ inp, setInp, M }) {
   })), [M.rows, IO_r]);
 
   // Lead with the minimum (lender's underwriting view), not flattering Year-1 IO coverage.
-  const dscrSub = M.minDSCR != null
-    ? M.minDSCR < 1.2
-      ? { text: "Below 1.20× covenant", cls: "mcard-warn" }
-      : { text: "Above 1.20× covenant", cls: "mcard-ok" }
-    : null;
+  // Three severities: breach (<1.0×, red) · thin cushion (1.0–1.2×, amber) · headroom (≥1.2×, green).
+  const dscrTier = (v) => v == null ? null
+    : v < 1.0 ? { text: "Below 1.00× — covenant breach", cls: "mcard-warn" }
+    : v < 1.2 ? { text: "Below 1.20× covenant — thin cushion", cls: "mcard-caution" }
+    : { text: "Above 1.20× covenant", cls: "mcard-ok" };
+  const dscrSub = dscrTier(M.minDSCR);
 
   return (
     <div className="page-layout">
@@ -49,7 +50,7 @@ export default function UnderwriterPage({ inp, setInp, M }) {
         <Sec title="Revenue & NOI">
           <NI id="grossRev" label={cfg.rev} value={inp.grossRev} onChange={num("grossRev")} pfx="€" step="5000" min="0" />
           <NI id="vacancy" label={`${cfg.vac} (%)`} value={inp.vacancy} onChange={num("vacancy")} sfx="%" step="0.5" min="0" max="50" />
-          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>EGI: {F.eur(M.egi)}</div>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>EGI: {F.eur(M.egi)}</div>
           <NI id="opexPct" label={`${cfg.opx} (% EGI)`} value={inp.opexPct} onChange={num("opexPct")} sfx="%" step="1" min="0" max="80" />
           <div className="highlight-box">
             <div style={{ fontSize: 10, color: "var(--muted)" }}>Net operating income</div>
@@ -62,22 +63,22 @@ export default function UnderwriterPage({ inp, setInp, M }) {
         <Sec title="Acquisition">
           <NI id="price" label="Purchase Price" value={inp.price} onChange={num("price")} pfx="€" step="100000" min="1" />
           <NI id="acqCosts" label="Acquisition Costs" value={inp.acqCosts} onChange={num("acqCosts")} sfx="%" step="0.25" min="0" max="10" />
-          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>Total outlay: {F.eur(M.totalAcq)}</div>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>Total outlay: {F.eur(M.totalAcq)}</div>
         </Sec>
 
         <Sec title="Debt Structure">
           <NI id="ltv" label="LTV" value={inp.ltv} onChange={num("ltv")} sfx="%" step="5" min="0" max="100" />
-          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
+          <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>
             Loan: {F.eur(M.loan)}<br />Equity: {F.eur(M.equity)}<br />
             Debt yield: {M.debtYield != null ? F.pct(M.debtYield * 100) : "—"}
           </div>
-          <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 6 }}>LTV sized on purchase price. Acq. costs &amp; CapEx are 100% equity-funded.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 6 }}>LTV sized on purchase price. Acq. costs &amp; CapEx are 100% equity-funded.</div>
           <NI id="intRate" label="Interest Rate" value={inp.intRate} onChange={num("intRate")} sfx="%" step="0.25" min="0" max="15" />
           <NI id="amortYrs" label="Amortisation (years)" value={inp.amortYrs} onChange={num("amortYrs")} step="1" min="5" max="40" />
           <NI id="ioYrs" label="Interest Only (years)" value={inp.ioYrs} onChange={num("ioYrs")} step="1" min="0" max="10" />
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>IO-then-amortising uses full-term payment; residual balloon exits at hold-period end.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)" }}>IO-then-amortising uses full-term payment; residual balloon exits at hold-period end.</div>
           {(inp.assetClass === "development" || (inp.capex > 0 && inp.leaseUpYrs > 0)) && (
-            <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 6, lineHeight: 1.5, borderTop: "1px solid var(--line)", paddingTop: 6 }}>
+            <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 6, lineHeight: 1.5, borderTop: "1px solid var(--line)", paddingTop: 6 }}>
               <strong>Simplification:</strong> debt is sized as LTV on stabilised value. A true
               development / heavy-reposition deal would be sized <em>loan-to-cost</em> with phased
               construction draws and interest during construction — materially changing the early
@@ -90,18 +91,18 @@ export default function UnderwriterPage({ inp, setInp, M }) {
           <NI id="hold" label="Hold Period (years)" value={inp.hold} onChange={num("hold")} step="1" min="1" max="15" />
           <NI id="exitCap" label="Exit Cap Rate" value={inp.exitCap} onChange={num("exitCap")} sfx="%" step="0.25" min="1" max="15" />
           <NI id="exitCosts" label="Disposal Costs" value={inp.exitCosts} onChange={num("exitCosts")} sfx="%" step="0.25" min="0" max="5" />
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>Exit valued on Year HP+1 (forward) NOI — buyer prices on forward earnings.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)" }}>Exit valued on Year HP+1 (forward) NOI — buyer prices on forward earnings.</div>
         </Sec>
 
         <Sec title="Capital Expenditure">
           <NI id="capex" label="Upfront CapEx" value={inp.capex} onChange={num("capex")} pfx="€" step="50000" min="0" />
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>Added to Uses & equity. 0 = none.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)" }}>Added to Uses & equity. 0 = none.</div>
         </Sec>
 
         <Sec title="Lease-Up (optional)">
           <NI id="leaseUpYrs" label="Lease-Up Period (years)" value={inp.leaseUpYrs} onChange={num("leaseUpYrs")} step="1" min="0" max="10" />
           <NI id="entryVacancy" label="Vacancy at Entry" value={inp.entryVacancy} onChange={num("entryVacancy")} sfx="%" step="1" min="0" max="100" />
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>NOI ramps from entry to stabilised. 0 yrs = stabilised day one.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)" }}>NOI ramps from entry to stabilised. 0 yrs = stabilised day one.</div>
         </Sec>
 
         <Sec title="Refinancing (optional)">
@@ -109,7 +110,7 @@ export default function UnderwriterPage({ inp, setInp, M }) {
           <NI id="refiLtv" label="Refi LTV" value={inp.refiLtv} onChange={num("refiLtv")} sfx="%" step="5" min="0" max="100" />
           <NI id="refiCap" label="Refi Valuation Cap" value={inp.refiCap} onChange={num("refiCap")} sfx="%" step="0.25" min="1" max="15" />
           <NI id="refiCosts" label="Refi Costs" value={inp.refiCosts} onChange={num("refiCosts")} sfx="%" step="0.25" min="0" max="5" />
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>0 = no refinancing.</div>
+          <div style={{ fontSize: 9, color: "var(--muted)" }}>0 = no refinancing.</div>
         </Sec>
 
         <Sec title="Mezzanine / Junior Debt">
@@ -117,10 +118,11 @@ export default function UnderwriterPage({ inp, setInp, M }) {
             <span style={{ fontSize: 12, color: "var(--ink-2)", fontWeight: 500 }}>Enable Mezzanine</span>
             <button
               type="button"
+              aria-pressed={inp.mezzOn}
               onClick={() => setInp((p) => ({ ...p, mezzOn: !p.mezzOn }))}
               style={{
                 background: inp.mezzOn ? PAL.slate : "#e2e8f0",
-                color: inp.mezzOn ? "#fff" : "#94a3b8",
+                color: inp.mezzOn ? "#fff" : "#64748b",
                 border: "none", borderRadius: 12, padding: "3px 14px",
                 fontWeight: 600, fontSize: 12, cursor: "pointer",
               }}
@@ -135,10 +137,11 @@ export default function UnderwriterPage({ inp, setInp, M }) {
               <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Interest type</span>
               <button
                 type="button"
+                aria-pressed={inp.mezzPik}
                 onClick={() => setInp((p) => ({ ...p, mezzPik: !p.mezzPik }))}
                 style={{
                   background: inp.mezzPik ? "#8b5cf6" : "#e2e8f0",
-                  color: inp.mezzPik ? "#fff" : "#94a3b8",
+                  color: inp.mezzPik ? "#fff" : "#64748b",
                   border: "none", borderRadius: 12, padding: "3px 14px",
                   fontWeight: 600, fontSize: 12, cursor: "pointer",
                 }}
@@ -147,7 +150,7 @@ export default function UnderwriterPage({ inp, setInp, M }) {
               </button>
             </div>
             {inp.mezzOn && (
-              <div style={{ fontSize: 9, color: "#94a3b8", lineHeight: 1.5 }}>
+              <div style={{ fontSize: 9, color: "var(--muted)", lineHeight: 1.5 }}>
                 Senior {inp.ltv}% + Mezz {inp.mezzLtv}% → Whole loan {inp.ltv + inp.mezzLtv}% LTV
                 {M.mezzLoan > 0 && <span> · {M.mezzPik ? "PIK" : "Cash-pay"} · Mezz: {F.eur(M.mezzLoan)}</span>}
               </div>
@@ -220,8 +223,8 @@ export default function UnderwriterPage({ inp, setInp, M }) {
             <MCard label="Blended Debt Rate" val={`${M.blendedDebtRate.toFixed(2)}%`}
               sub={`Senior ${inp.intRate}% · Mezz ${inp.mezzRate}%`} />
             <MCard label="WL Min DSCR" val={F.mul(M.minWholeLoanDSCR)}
-              sub={(() => { const v = M.minWholeLoanDSCR; if (v == null) return "—"; const lead = v < 1.0 ? "Below 1.0× — covenant breach" : v < 1.2 ? "Thin cushion" : "Covenant headroom"; return `${lead} · Yr 1 ${F.mul(M.rows[0]?.wholeLoanDSCR)}`; })()}
-              subClass={(() => { const v = M.minWholeLoanDSCR; return v != null && v < 1.2 ? "mcard-warn" : "mcard-ok"; })()} />
+              sub={(() => { const t = dscrTier(M.minWholeLoanDSCR); if (!t) return "—"; return `${t.text} · Yr 1 ${F.mul(M.rows[0]?.wholeLoanDSCR)}${inp.mezzPik ? " (cash DS only — PIK accrues)" : ""}`; })()}
+              subClass={dscrTier(M.minWholeLoanDSCR)?.cls} />
             <MCard label="Mezzanine Loan" val={F.eur(M.mezzLoan)}
               sub={inp.mezzPik ? "PIK — accrues to exit" : "Cash-pay — IO bullet"} />
           </div>
@@ -230,7 +233,7 @@ export default function UnderwriterPage({ inp, setInp, M }) {
         {inp.mezzOn && M.valid && M.mezzLoan > 0 && (
           <div className="card">
             <div className="card-title">Mezzanine Debt Schedule</div>
-            <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 8 }}>
+            <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 8 }}>
               {inp.mezzPik ? "PIK — interest accrues to balance, repaid at exit." : "Cash-pay — IO bullet, interest paid annually."}
             </div>
             <div className="table-scroll">
@@ -238,7 +241,7 @@ export default function UnderwriterPage({ inp, setInp, M }) {
                 <thead>
                   <tr style={{ background: totalRowBg }}>
                     {["Year", "Mezz Balance (BOP)", "Interest", inp.mezzPik ? "PIK Added" : "Cash Pay", "Mezz Balance (EOP)"].map((h) => (
-                      <th key={h} style={{ textAlign: h === "Year" ? "left" : "right" }}>{h}</th>
+                      <th key={h} scope="col" style={{ textAlign: h === "Year" ? "left" : "right" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -272,7 +275,7 @@ export default function UnderwriterPage({ inp, setInp, M }) {
               <thead>
                 <tr style={{ background: totalRowBg }}>
                   {["Year", "NOI", "Interest", "Principal", "Debt Service", "CFADS", "DSCR", "Loan Bal.", "Exit Equity"].map((h) => (
-                    <th key={h} style={{ textAlign: h === "Year" ? "left" : "right" }}>{h}</th>
+                    <th key={h} scope="col" style={{ textAlign: h === "Year" ? "left" : "right" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -322,7 +325,7 @@ export default function UnderwriterPage({ inp, setInp, M }) {
         <div className="two-col-grid">
           <div className="card" style={{ marginBottom: 0 }}>
             <div className="card-title" style={{ fontSize: 12 }}>Annual Cash Flows</div>
-            <div style={{ fontSize: 9, color: "#94a3b8", marginBottom: 8 }} aria-hidden="true">IO = Interest Only period</div>
+            <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 8 }} aria-hidden="true">IO = Interest Only period</div>
             <ResponsiveContainer width="100%" height={185}>
               <BarChart data={chartData} margin={{ top: 0, right: 40, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gk} />
@@ -352,7 +355,7 @@ export default function UnderwriterPage({ inp, setInp, M }) {
                 <option value="noiGrowth">vs NOI Growth</option>
               </select>
             </div>
-            <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 10 }}>
+            <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 10 }}>
               Exit Cap (rows) ×{" "}
               {sensCol === "price" ? "Purchase Price (±%)" : sensCol === "ltv" ? "LTV" : "NOI Growth"}{" "}
               (cols) ·{" "}
@@ -365,11 +368,11 @@ export default function UnderwriterPage({ inp, setInp, M }) {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 320 }}>
                 <thead>
                   <tr>
-                    <th style={{ fontSize: 9, fontWeight: 500, color: "#94a3b8", padding: "3px 5px", textAlign: "left", width: 55 }}>
+                    <th style={{ fontSize: 9, fontWeight: 500, color: "var(--muted)", padding: "3px 5px", textAlign: "left", width: 55 }}>
                       Cap ↓ {sensCol === "ltv" ? "LTV" : sensCol === "price" ? "Price" : "g"} →
                     </th>
                     {SENS.cols.map((c, ci) => (
-                      <th key={ci} style={{ fontSize: 10, fontWeight: 600, padding: "3px 4px", textAlign: "center", color: Math.abs(c - SENS.currentCol) < 1e-6 ? PAL.green : "#94a3b8" }}>
+                      <th key={ci} style={{ fontSize: 10, fontWeight: 600, padding: "3px 4px", textAlign: "center", color: Math.abs(c - SENS.currentCol) < 1e-6 ? PAL.green : "var(--muted)" }}>
                         {SENS.colLabels[ci]}
                       </th>
                     ))}
@@ -415,19 +418,28 @@ export default function UnderwriterPage({ inp, setInp, M }) {
           </div>
         </div>
         <div className="card">
-          <div
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+          <button
+            type="button"
             onClick={() => setMethOpen((o) => !o)}
+            aria-expanded={methOpen}
+            aria-controls="methodology-list"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              width: "100%", background: "none", border: "none", padding: 0, textAlign: "left",
+            }}
           >
-            <div className="card-title" style={{ marginBottom: 0 }}>Methodology &amp; Key Assumptions</div>
-            <span style={{ color: "#94a3b8", fontSize: 11, userSelect: "none" }}>{methOpen ? "▲" : "▼"}</span>
-          </div>
+            <span className="card-title" style={{ marginBottom: 0 }}>Methodology &amp; Key Assumptions</span>
+            <span style={{ color: "var(--muted)", fontSize: 11, userSelect: "none" }} aria-hidden="true">{methOpen ? "▲" : "▼"}</span>
+          </button>
           {methOpen && (
-            <ul style={{ fontSize: 11, color: "#64748b", lineHeight: 1.75, marginTop: 10, paddingLeft: 18 }}>
+            <ul id="methodology-list" style={{ fontSize: 11, color: "#64748b", lineHeight: 1.75, marginTop: 10, paddingLeft: 18 }}>
               <li>Exit value = forward (year +1) NOI ÷ exit cap rate.</li>
               <li>Leverage sized on purchase price (LTV); acquisition costs and capex are equity-funded.</li>
               <li>Preferred return accrues on committed capital (outstanding-capital method), not a simple coupon.</li>
               <li>Interest-only loans carry a balloon balance at exit, repaid from sale proceeds.</li>
+              <li>A refinance re-sizes the loan on the revaluation cap and restarts the amortisation schedule.</li>
+              <li>Years with a net cash shortfall are funded as pro-rata LP/GP capital calls in the waterfall.</li>
+              <li>DSCR is computed on cash debt service; PIK mezzanine interest accrues and is repaid at exit.</li>
               <li>IRR solved numerically (Newton-Raphson with bisection fallback).</li>
             </ul>
           )}

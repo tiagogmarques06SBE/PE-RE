@@ -1,5 +1,21 @@
 import { calcIRR, pmt } from "./irr";
 
+/**
+ * Model conventions (disclosed in the UI methodology panel and README):
+ *  - Exit value = forward (Year HP+1) NOI ÷ exit cap; a buyer prices on forward earnings.
+ *  - Senior leverage is sized on purchase price (LTV); acquisition costs and capex are equity-funded.
+ *  - IO-then-amortising debt uses the full-term annuity payment; the residual balloon repays at exit.
+ *  - A refinance re-sizes the loan on a revaluation cap and restarts the amortisation schedule.
+ *  - Mezzanine is an IO bullet: cash-pay (annual interest) or PIK (interest compounds to exit).
+ *  - All periods are annual; cash flows occur at period end.
+ *
+ * @typedef {Object} ModelInputs  — see DEF in config.js for the full field list and defaults.
+ * @typedef {Object} ModelOutputs — computeModel() returns { valid, errors, levIRR, unlevIRR, mom,
+ *   coc, equity, loan, mezzLoan, totalAcq, noi, egi, capIn, rows[], levCF[], minDSCR, minDSCRYear,
+ *   minWholeLoanDSCR, debtYield, wholeLoanDebtYield, yieldOnCost, valueAddSpreadBps, exitGross,
+ *   refiEvent, totalDist, noIRR, HP, IO }.
+ */
+
 export function validateInputs(i) {
   const errors = [];
   if (!i.price || i.price <= 0) errors.push("Purchase price must be positive.");
@@ -15,6 +31,11 @@ export function validateInputs(i) {
   if (i.mezzOn) {
     if ((i.mezzRate || 0) < 0 || (i.mezzRate || 0) > 30) errors.push("Mezzanine rate must be between 0% and 30%.");
     if ((i.mezzLtv || 0) < 0) errors.push("Mezzanine LTV must be non-negative.");
+  }
+  if ((i.refiYr || 0) > 0) {
+    if (!(i.refiCap > 0) || i.refiCap > 30) errors.push("Refinance valuation cap must be between 0% and 30%.");
+    if (i.refiLtv < 0 || i.refiLtv > 100) errors.push("Refinance LTV must be between 0% and 100%.");
+    if ((i.refiCosts || 0) < 0 || (i.refiCosts || 0) > 10) errors.push("Refinance costs must be between 0% and 10%.");
   }
 
   const totalAcq = i.price * (1 + i.acqCosts / 100);

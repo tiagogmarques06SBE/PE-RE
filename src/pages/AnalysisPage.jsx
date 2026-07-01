@@ -17,12 +17,7 @@ export default function AnalysisPage({ inp, M, wf }) {
   const tornado  = useMemo(() => computeTornado(inp), [inp]);
 
   if (!M.valid) {
-    return (
-      <div className="page-layout">
-        <aside className="sidebar" />
-        <InvalidPanel message="Adjust inputs in the Underwriter tab to generate the analysis." />
-      </div>
-    );
+    return <InvalidPanel message="Adjust inputs in the Underwriting tab to generate the analysis." />;
   }
 
   const scColor = (s) => (!s.valid || s.noIRR ? "weak" : s.levIRR >= 15 ? "good" : s.levIRR >= 8 ? "ok" : "weak");

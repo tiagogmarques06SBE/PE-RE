@@ -19,5 +19,4 @@ export const PAL = {
   oxblood:   "#dc2626",   // red-600 — debt service, negatives
   slate:     "#6366f1",   // indigo-500 — CFADS bars
   sage:      "#7a9c8b",   // sage — waterfall tiers
-  ink:       "#0f172a",   // slate-900 — text
 };
