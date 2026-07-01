@@ -3,9 +3,9 @@
 // one-line market read shown in the underwriting header.
 export const AC = {
   industrial:  { name: "Industrial / Logistics",  rev: "Contracted Rent",     vac: "Void Allowance",        opx: "Non-Recoverable Costs",
-    thesis: "Hottest Iberian sector — e-commerce, nearshoring, Sines/Valencia ports." },
+    thesis: "Hottest Iberian sector — e-commerce and nearshoring demand on port corridors." },
   residential: { name: "Residential / BTR",        rev: "Gross Rent Roll",     vac: "Vacancy & Bad Debt",    opx: "Operating Expenses",
-    thesis: "Structural supply shortage in Lisbon, Porto, Madrid and Barcelona." },
+    thesis: "Structural housing supply shortage across major Iberian metros." },
   office:      { name: "Office",                    rev: "Passing Rent",        vac: "Void Allowance",        opx: "Non-Recoverable Costs",
     thesis: "Core transaction volume; value-add repricing in prime CBD post-COVID." },
   hospitality: { name: "Hospitality",              rev: "Total Hotel Revenue", vac: "Out-of-Order Rooms",    opx: "Hotel Operating Costs",
@@ -19,7 +19,7 @@ export const AC = {
 };
 
 export const DEF = {
-  dealName: "Lisbon Office – Value Add",
+  dealName: "CBD Office — Value-Add",
   assetClass: "office",
   grossRev: 700000,
   vacancy: 8,
@@ -79,15 +79,15 @@ export const PRESETS = {
   // ── Iberian sectors ─────────────────────────────────────────────
   industrial: {
     group: "Iberian sectors", label: "Industrial / Logistics — big-box",
-    inp: { ...DEF, dealName: "Iberia Logistics — Big-Box", assetClass: "industrial",
+    inp: { ...DEF, dealName: "Big-Box Logistics — Industrial", assetClass: "industrial",
       grossRev: 600000, vacancy: 3, opexPct: 8, noiGrowth: 3.5,
       price: 9330000, acqCosts: 2, ltv: 58, intRate: 4.5, amortYrs: 30, ioYrs: 1,
       hold: 5, exitCap: 5.5, exitCosts: 1.5, capex: 0, leaseUpYrs: 0, entryVacancy: 3,
       refiYr: 0, mezzOn: false, targetIRR: 14 },
   },
   residential: {
-    group: "Iberian sectors", label: "Residential / BTR — Lisbon",
-    inp: { ...DEF, dealName: "Lisbon BTR — Residential", assetClass: "residential",
+    group: "Iberian sectors", label: "Residential / BTR — urban scheme",
+    inp: { ...DEF, dealName: "Urban BTR — Residential", assetClass: "residential",
       grossRev: 520000, vacancy: 4, opexPct: 22, noiGrowth: 3.5,
       price: 9500000, acqCosts: 2, ltv: 62, intRate: 4.5, amortYrs: 30, ioYrs: 2,
       hold: 6, exitCap: 4.0, exitCosts: 1.5, capex: 0, leaseUpYrs: 0, entryVacancy: 4,
@@ -98,8 +98,8 @@ export const PRESETS = {
     inp: { ...DEF },
   },
   hospitality: {
-    group: "Iberian sectors", label: "Hospitality — Algarve resort",
-    inp: { ...DEF, dealName: "Algarve Resort — Hospitality", assetClass: "hospitality",
+    group: "Iberian sectors", label: "Hospitality — resort hotel",
+    inp: { ...DEF, dealName: "Resort Hotel — Hospitality", assetClass: "hospitality",
       grossRev: 2100000, vacancy: 2, opexPct: 70, noiGrowth: 3.0,
       price: 8820000, acqCosts: 2, ltv: 60, intRate: 5.0, amortYrs: 25, ioYrs: 1,
       hold: 5, exitCap: 7.0, exitCosts: 1.5, capex: 0, leaseUpYrs: 0, entryVacancy: 2,
@@ -107,23 +107,23 @@ export const PRESETS = {
   },
   retail: {
     group: "Iberian sectors", label: "Retail — dominant retail park",
-    inp: { ...DEF, dealName: "Iberian Retail Park", assetClass: "retail",
+    inp: { ...DEF, dealName: "Dominant Retail Park — Retail", assetClass: "retail",
       grossRev: 760000, vacancy: 6, opexPct: 18, noiGrowth: 1.5,
       price: 9400000, acqCosts: 2, ltv: 60, intRate: 4.75, amortYrs: 30, ioYrs: 0,
       hold: 6, exitCap: 6.25, exitCosts: 1.5, capex: 0, leaseUpYrs: 0, entryVacancy: 6,
       refiYr: 0, mezzOn: false, targetIRR: 9 },
   },
   student: {
-    group: "Iberian sectors", label: "Student Housing / PBSA — Porto",
-    inp: { ...DEF, dealName: "Porto PBSA — Student Housing", assetClass: "student",
+    group: "Iberian sectors", label: "Student Housing / PBSA",
+    inp: { ...DEF, dealName: "PBSA — Student Housing", assetClass: "student",
       grossRev: 720000, vacancy: 5, opexPct: 28, noiGrowth: 4.0,
       price: 9240000, acqCosts: 2, ltv: 58, intRate: 4.5, amortYrs: 30, ioYrs: 1,
       hold: 5, exitCap: 5.25, exitCosts: 1.5, capex: 0, leaseUpYrs: 0, entryVacancy: 5,
       refiYr: 0, mezzOn: false, targetIRR: 13 },
   },
   development: {
-    group: "Iberian sectors", label: "Development / BTS — Madrid",
-    inp: { ...DEF, dealName: "Madrid BTS — Development", assetClass: "development",
+    group: "Iberian sectors", label: "Development / BTS — pre-let",
+    inp: { ...DEF, dealName: "Pre-Let BTS — Development", assetClass: "development",
       grossRev: 800000, vacancy: 8, opexPct: 20, noiGrowth: 4.5,
       price: 8750000, acqCosts: 2, ltv: 68, intRate: 5.0, amortYrs: 25, ioYrs: 1,
       hold: 5, exitCap: 5.5, exitCosts: 1.5, capex: 800000, leaseUpYrs: 3, entryVacancy: 52,
@@ -149,7 +149,7 @@ export const PRESETS = {
   },
   valueAdd: {
     group: "Risk strategy", label: "Value-Add — reposition & lease-up",
-    inp: { ...DEF, dealName: "Lisbon Office — Value-Add", assetClass: "office",
+    inp: { ...DEF, dealName: "Office Reposition — Value-Add", assetClass: "office",
       grossRev: 700000, vacancy: 8, opexPct: 20, noiGrowth: 4.5,
       price: 9000000, acqCosts: 2, ltv: 63, intRate: 4.5, amortYrs: 25, ioYrs: 2,
       hold: 5, exitCap: 5.25, exitCosts: 1.5, capex: 600000, leaseUpYrs: 2, entryVacancy: 20,
